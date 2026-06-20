@@ -3,6 +3,7 @@ package localCache
 import (
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/daryakovzhun/collect-metrics/internal/repository"
+	"github.com/daryakovzhun/collect-metrics/internal/utils"
 )
 
 type storage struct {
@@ -17,20 +18,10 @@ func New() repository.IRepository {
 	}
 }
 
-func (s *storage) SetGaugeMetric(metric *models.Metrics) error {
-	s.gauge[metric.ID] = fromPointer(metric.Value)
-	return nil
+func (s *storage) SetGaugeMetric(metric *models.Metrics) {
+	s.gauge[metric.ID] = utils.FromPointer(metric.Value)
 }
 
-func (s *storage) SetCounterMetric(metric *models.Metrics) error {
-	s.counter[metric.ID] += fromPointer(metric.Delta)
-	return nil
-}
-
-func fromPointer[T any](p *T) T {
-	if p == nil {
-		var zero T
-		return zero
-	}
-	return *p
+func (s *storage) SetCounterMetric(metric *models.Metrics) {
+	s.counter[metric.ID] += utils.FromPointer(metric.Delta)
 }

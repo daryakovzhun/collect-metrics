@@ -5,10 +5,10 @@ import (
 )
 
 type Handler struct {
-	domain controller.IController
+	domain controller.IServerController
 }
 
-func New(domain controller.IController) *Handler {
+func New(domain controller.IServerController) *Handler {
 	return &Handler{
 		domain: domain,
 	}

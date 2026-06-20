@@ -1,4 +1,4 @@
-package server
+package router
 
 import (
 	"github.com/daryakovzhun/collect-metrics/internal/handler"

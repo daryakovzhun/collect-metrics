@@ -5,6 +5,10 @@ import (
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 )
 
-type IController interface {
+type IServerController interface {
 	SetMetric(ctx context.Context, metric *models.Metrics) error
+}
+
+type IAgentController interface {
+	Start(ctx context.Context) error
 }
