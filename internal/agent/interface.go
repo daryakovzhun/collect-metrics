@@ -1,6 +1,11 @@
 package agent
 
+import (
+	"context"
+	"github.com/daryakovzhun/collect-metrics/internal/repository"
+)
+
 type IAgent interface {
-	GetCounterMetrics()
-	GetGaugeMetrics()
+	Collect(ctx context.Context)
+	repository.IRepository
 }

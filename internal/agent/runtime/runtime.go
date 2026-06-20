@@ -16,14 +16,14 @@ type Config struct {
 }
 
 type rtAgent struct {
-	cfg  *Config
-	repo repository.IRepository
+	cfg *Config
+	repository.IRepository
 }
 
 func New(cfg *Config, repo repository.IRepository) agent.IAgent {
 	return &rtAgent{
-		cfg:  cfg,
-		repo: repo,
+		cfg:         cfg,
+		IRepository: repo,
 	}
 }
 
@@ -48,38 +48,38 @@ func (a *rtAgent) Collect(ctx context.Context) {
 }
 
 func (a *rtAgent) collectGaugeMetrics(memStats runtime.MemStats) {
-	a.repo.SetGaugeMetric(toGaugeMetric(Alloc, float64(memStats.Alloc)))
-	a.repo.SetGaugeMetric(toGaugeMetric(BuckHashSys, float64(memStats.BuckHashSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(Frees, float64(memStats.Frees)))
-	a.repo.SetGaugeMetric(toGaugeMetric(GCCPUFraction, memStats.GCCPUFraction))
-	a.repo.SetGaugeMetric(toGaugeMetric(GCSys, float64(memStats.GCSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapAlloc, float64(memStats.HeapAlloc)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapIdle, float64(memStats.HeapIdle)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapInuse, float64(memStats.HeapInuse)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapObjects, float64(memStats.HeapObjects)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapReleased, float64(memStats.HeapReleased)))
-	a.repo.SetGaugeMetric(toGaugeMetric(HeapSys, float64(memStats.HeapSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(LastGC, float64(memStats.LastGC)))
-	a.repo.SetGaugeMetric(toGaugeMetric(Lookups, float64(memStats.Lookups)))
-	a.repo.SetGaugeMetric(toGaugeMetric(MCacheInuse, float64(memStats.MCacheInuse)))
-	a.repo.SetGaugeMetric(toGaugeMetric(MCacheSys, float64(memStats.MCacheSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(MSpanInuse, float64(memStats.MSpanInuse)))
-	a.repo.SetGaugeMetric(toGaugeMetric(MSpanSys, float64(memStats.MSpanSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(Mallocs, float64(memStats.Mallocs)))
-	a.repo.SetGaugeMetric(toGaugeMetric(NextGC, float64(memStats.NextGC)))
-	a.repo.SetGaugeMetric(toGaugeMetric(NumForcedGC, float64(memStats.NumForcedGC)))
-	a.repo.SetGaugeMetric(toGaugeMetric(NumGC, float64(memStats.NumGC)))
-	a.repo.SetGaugeMetric(toGaugeMetric(OtherSys, float64(memStats.OtherSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(PauseTotalNs, float64(memStats.PauseTotalNs)))
-	a.repo.SetGaugeMetric(toGaugeMetric(StackInuse, float64(memStats.StackInuse)))
-	a.repo.SetGaugeMetric(toGaugeMetric(StackSys, float64(memStats.StackSys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(Sys, float64(memStats.Sys)))
-	a.repo.SetGaugeMetric(toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
+	a.SetGaugeMetric(toGaugeMetric(Alloc, float64(memStats.Alloc)))
+	a.SetGaugeMetric(toGaugeMetric(BuckHashSys, float64(memStats.BuckHashSys)))
+	a.SetGaugeMetric(toGaugeMetric(Frees, float64(memStats.Frees)))
+	a.SetGaugeMetric(toGaugeMetric(GCCPUFraction, memStats.GCCPUFraction))
+	a.SetGaugeMetric(toGaugeMetric(GCSys, float64(memStats.GCSys)))
+	a.SetGaugeMetric(toGaugeMetric(HeapAlloc, float64(memStats.HeapAlloc)))
+	a.SetGaugeMetric(toGaugeMetric(HeapIdle, float64(memStats.HeapIdle)))
+	a.SetGaugeMetric(toGaugeMetric(HeapInuse, float64(memStats.HeapInuse)))
+	a.SetGaugeMetric(toGaugeMetric(HeapObjects, float64(memStats.HeapObjects)))
+	a.SetGaugeMetric(toGaugeMetric(HeapReleased, float64(memStats.HeapReleased)))
+	a.SetGaugeMetric(toGaugeMetric(HeapSys, float64(memStats.HeapSys)))
+	a.SetGaugeMetric(toGaugeMetric(LastGC, float64(memStats.LastGC)))
+	a.SetGaugeMetric(toGaugeMetric(Lookups, float64(memStats.Lookups)))
+	a.SetGaugeMetric(toGaugeMetric(MCacheInuse, float64(memStats.MCacheInuse)))
+	a.SetGaugeMetric(toGaugeMetric(MCacheSys, float64(memStats.MCacheSys)))
+	a.SetGaugeMetric(toGaugeMetric(MSpanInuse, float64(memStats.MSpanInuse)))
+	a.SetGaugeMetric(toGaugeMetric(MSpanSys, float64(memStats.MSpanSys)))
+	a.SetGaugeMetric(toGaugeMetric(Mallocs, float64(memStats.Mallocs)))
+	a.SetGaugeMetric(toGaugeMetric(NextGC, float64(memStats.NextGC)))
+	a.SetGaugeMetric(toGaugeMetric(NumForcedGC, float64(memStats.NumForcedGC)))
+	a.SetGaugeMetric(toGaugeMetric(NumGC, float64(memStats.NumGC)))
+	a.SetGaugeMetric(toGaugeMetric(OtherSys, float64(memStats.OtherSys)))
+	a.SetGaugeMetric(toGaugeMetric(PauseTotalNs, float64(memStats.PauseTotalNs)))
+	a.SetGaugeMetric(toGaugeMetric(StackInuse, float64(memStats.StackInuse)))
+	a.SetGaugeMetric(toGaugeMetric(StackSys, float64(memStats.StackSys)))
+	a.SetGaugeMetric(toGaugeMetric(Sys, float64(memStats.Sys)))
+	a.SetGaugeMetric(toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
 }
 
 func (a *rtAgent) collectCounterMetrics(poolCount int64) {
-	a.repo.SetCounterMetric(toCounterMetric(PollCount, poolCount))
-	a.repo.SetCounterMetric(toCounterMetric(RandomValue, rand.Int64()))
+	a.SetCounterMetric(toCounterMetric(PollCount, poolCount))
+	a.SetCounterMetric(toCounterMetric(RandomValue, rand.Int64()))
 }
 
 func toGaugeMetric(name string, value float64) *models.Metrics {
