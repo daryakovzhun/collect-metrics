@@ -61,7 +61,47 @@ func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAllMetrics(w http.ResponseWriter, r *http.Request) {
+	metrics, err := h.domain.GetAllMetrics(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
+	views := make([]MetricView, 0, len(metrics))
+	for _, m := range metrics {
+		view := MetricView{
+			Name: m.ID,
+			Type: m.MType,
+		}
+		// Формируем строковое значение
+		switch m.MType {
+		case models.Gauge:
+			if m.Value != nil {
+				view.Value = fmt.Sprintf("%g", *m.Value)
+			} else {
+				view.Value = "null"
+			}
+		case models.Counter:
+			if m.Delta != nil {
+				view.Value = fmt.Sprintf("%d", *m.Delta)
+			} else {
+				view.Value = "null"
+			}
+		default:
+			view.Value = "unknown type"
+		}
+		views = append(views, view)
+	}
+
+	data := MetricsList{Items: views}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	err = h.metricsTmpl.Execute(w, data)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 }
 
 func getMetricFromReq(r *http.Request, parseValue bool) (*models.Metrics, error) {

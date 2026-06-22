@@ -146,7 +146,7 @@ func TestStorage_GetGaugeMetrics(t *testing.T) {
 	s.SetGaugeMetric(&models.Metrics{ID: "g1", Value: toPtrFloat64(1.1)})
 	s.SetGaugeMetric(&models.Metrics{ID: "g2", Value: toPtrFloat64(2.2)})
 
-	metrics := s.GetGaugeMetrics()
+	metrics, _ := s.GetGaugeMetrics()
 	if len(metrics) != 2 {
 		t.Errorf("expected 2 metrics, got %d", len(metrics))
 	}
@@ -165,7 +165,7 @@ func TestStorage_GetCounterMetrics(t *testing.T) {
 	s.SetCounterMetric(&models.Metrics{ID: "c1", Delta: toPtrInt64(10)})
 	s.SetCounterMetric(&models.Metrics{ID: "c2", Delta: toPtrInt64(20)})
 
-	metrics := s.GetCounterMetrics()
+	metrics, _ := s.GetCounterMetrics()
 	if len(metrics) != 2 {
 		t.Errorf("expected 2 metrics, got %d", len(metrics))
 	}

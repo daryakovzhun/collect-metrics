@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Все метрики</title>
+    <style>
+        table { border-collapse: collapse; width: 80%; margin: 20px auto; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+<h1 style="text-align:center;">Список метрик</h1>
+<table>
+    <tr><th>Имя</th><th>Тип</th><th>Значение</th></tr>
+    {{range .Items}}
+    <tr><td>{{.Name}}</td><td>{{.Type}}</td><td>{{.Value}}</td></tr>
+    {{end}}
+</table>
+</body>
+</html>

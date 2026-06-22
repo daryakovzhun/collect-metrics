@@ -35,6 +35,36 @@ func (m *MockIServerController) EXPECT() *MockIServerControllerMockRecorder {
 	return m.recorder
 }
 
+// GetAllMetrics mocks base method.
+func (m *MockIServerController) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllMetrics", ctx)
+	ret0, _ := ret[0].([]models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllMetrics indicates an expected call of GetAllMetrics.
+func (mr *MockIServerControllerMockRecorder) GetAllMetrics(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIServerController)(nil).GetAllMetrics), ctx)
+}
+
+// GetMetric mocks base method.
+func (m *MockIServerController) GetMetric(ctx context.Context, metric *models.Metrics) (*models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetric", ctx, metric)
+	ret0, _ := ret[0].(*models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetric indicates an expected call of GetMetric.
+func (mr *MockIServerControllerMockRecorder) GetMetric(ctx, metric interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetric", reflect.TypeOf((*MockIServerController)(nil).GetMetric), ctx, metric)
+}
+
 // SetMetric mocks base method.
 func (m *MockIServerController) SetMetric(ctx context.Context, metric *models.Metrics) error {
 	m.ctrl.T.Helper()

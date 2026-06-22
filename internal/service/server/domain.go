@@ -33,3 +33,7 @@ func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 func (d *domain) GetMetric(ctx context.Context, metric *models.Metrics) (*models.Metrics, error) {
 	return d.repo.GetMetricByID(metric)
 }
+
+func (d *domain) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
+	return d.repo.GetAllMetrics()
+}

@@ -47,13 +47,21 @@ func (d *domain) Start(ctx context.Context) error {
 }
 
 func (d *domain) sendMetrics() error {
-	gauge := d.agent.GetGaugeMetrics()
-	err := d.sendListMetrics(gauge)
+	gauge, err := d.agent.GetGaugeMetrics()
+	if err != nil {
+		return fmt.Errorf("get gauge: %w", err)
+	}
+
+	err = d.sendListMetrics(gauge)
 	if err != nil {
 		return fmt.Errorf("error gauge: %w", err)
 	}
 
-	counter := d.agent.GetCounterMetrics()
+	counter, err := d.agent.GetCounterMetrics()
+	if err != nil {
+		return fmt.Errorf("get counter: %w", err)
+	}
+
 	err = d.sendListMetrics(counter)
 	if err != nil {
 		return fmt.Errorf("error counter: %w", err)
