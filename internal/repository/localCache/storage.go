@@ -50,3 +50,23 @@ func (s *storage) GetCounterMetrics() []models.Metrics {
 
 	return counter
 }
+
+func (s *storage) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+	var val models.Metrics
+	var ok bool
+
+	switch metric.MType {
+	case models.Counter:
+		val, ok = s.counter[metric.ID]
+	case models.Gauge:
+		val, ok = s.gauge[metric.ID]
+	default:
+		return nil, models.ErrUnknownMetricType
+	}
+
+	if !ok {
+		return nil, models.ErrNotFound
+	}
+
+	return &val, nil
+}

@@ -29,3 +29,7 @@ func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 
 	return nil
 }
+
+func (d *domain) GetMetric(ctx context.Context, metric *models.Metrics) (*models.Metrics, error) {
+	return d.repo.GetMetricByID(metric)
+}

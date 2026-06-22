@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func WithLogger(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func WithLogger(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		t1 := time.Now()
 		defer func() {
 			slog.Info(
@@ -18,6 +18,6 @@ func WithLogger(next http.HandlerFunc) http.HandlerFunc {
 			)
 		}()
 
-		next.ServeHTTP(w, r)
-	}
+		h.ServeHTTP(w, r)
+	})
 }

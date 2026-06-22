@@ -9,4 +9,5 @@ type IRepository interface {
 	SetCounterMetric(metric *models.Metrics)
 	GetGaugeMetrics() []models.Metrics
 	GetCounterMetrics() []models.Metrics
+	GetMetricByID(metric *models.Metrics) (*models.Metrics, error)
 }
