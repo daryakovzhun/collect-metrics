@@ -23,7 +23,6 @@ func New(domain controller.IServerController) *Handler {
 		metricsTmpl: template.Must(
 			template.
 				New("metrics.html").
-				//Funcs(templFunc).
 				ParseFS(tmplFS, "metrics.html"),
 		),
 	}
