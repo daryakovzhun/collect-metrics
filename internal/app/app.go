@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/agent/runtime"
 	httpclient "github.com/daryakovzhun/collect-metrics/internal/client/http"
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
@@ -16,24 +17,28 @@ import (
 )
 
 func Run() error {
+	cfg := getServerConfig()
+
 	storage := localCache.New()
 	domain := server.New(storage)
 	h := handler.New(domain)
 	router := router.New(h)
 
-	slog.Info("SERVER START :8080")
-	return http.ListenAndServe(":8080", router)
+	slog.Info(fmt.Sprintf("SERVER START %s", cfg.Address))
+	return http.ListenAndServe(cfg.Address, router)
 }
 
 func RunAgent(ctx context.Context) error {
+	cfg := getAgentConfig()
+
 	storage := localCache.New()
-	ag := runtime.New(&runtime.Config{PollInterval: 2 * time.Second}, storage)
+	ag := runtime.New(&runtime.Config{PollInterval: time.Duration(cfg.PollInterval) * time.Second}, storage)
 	cl := httpclient.New(&httpclient.Config{
 		Timeout: 2 * time.Second,
-		URL:     "http://localhost:8080",
+		URL:     "http://" + cfg.ServerAddress,
 	})
 
-	domain := agent.New(&agent.Config{ReportInterval: 10 * time.Second}, ag, cl)
+	domain := agent.New(&agent.Config{ReportInterval: time.Duration(cfg.ReportInterval) * time.Second}, ag, cl)
 
 	return domain.Start(ctx)
 }
