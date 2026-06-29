@@ -1,179 +1,261 @@
 package localCache
 
 import (
+	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"testing"
 
-	models "github.com/daryakovzhun/collect-metrics/internal/model"
+	"github.com/daryakovzhun/collect-metrics/internal/utils"
+	"github.com/stretchr/testify/assert"
 )
 
-// Вспомогательные функции для создания указателей
-func toPtrInt64(v int64) *int64 {
-	return &v
-}
-
-func toPtrFloat64(v float64) *float64 {
-	return &v
-}
-
-// Тест для New()
 func TestNew(t *testing.T) {
-	s := New()
-	if s == nil {
-		t.Error("New() returned nil")
-	}
-	store, ok := s.(*storage)
-	if !ok {
-		t.Fatal("New() returned not *storage")
-	}
-	if store.gauge == nil {
-		t.Error("gauge map is nil")
-	}
-	if store.counter == nil {
-		t.Error("counter map is nil")
-	}
+	repo := New()
+	assert.NotNil(t, repo)
 }
 
-// Тест SetGaugeMetric – добавление и проверка копирования
 func TestStorage_SetGaugeMetric(t *testing.T) {
-	s := New().(*storage)
-	metric := &models.Metrics{
-		ID:    "test_gauge",
-		Value: toPtrFloat64(123.45),
-	}
-	s.SetGaugeMetric(metric)
+	repo := New().(*storage)
 
-	if len(s.gauge) != 1 {
-		t.Errorf("expected 1 gauge metric, got %d", len(s.gauge))
+	metric1 := models.Metrics{
+		ID:    "test_gauge_1",
+		MType: models.Gauge,
+		Value: utils.ToPointer(123.45),
 	}
-	val, ok := s.gauge["test_gauge"]
-	if !ok {
-		t.Error("metric not found in gauge map")
-	}
-	if val.Value == nil {
-		t.Error("Value is nil")
-	} else if *val.Value != 123.45 {
-		t.Errorf("expected value 123.45, got %v", *val.Value)
+	metric2 := models.Metrics{
+		ID:    "test_gauge_2",
+		MType: models.Gauge,
+		Value: utils.ToPointer(67.89),
 	}
 
-	// Проверка, что сохранённое значение не зависит от внешнего изменения
-	metric.Value = toPtrFloat64(999.99)
-	if *s.gauge["test_gauge"].Value == 999.99 {
-		t.Error("saved metric was modified by external change")
+	repo.SetGaugeMetric(metric1)
+	repo.SetGaugeMetric(metric2)
+
+	// Проверяем, что обе метрики сохранены
+	gauges, err := repo.GetGaugeMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, gauges, 2)
+
+	// Проверяем значения по ID (можем получить через GetMetricByID)
+	for _, m := range gauges {
+		if m.ID == metric1.ID {
+			assert.Equal(t, *metric1.Value, *m.Value)
+		} else if m.ID == metric2.ID {
+			assert.Equal(t, *metric2.Value, *m.Value)
+		} else {
+			t.Errorf("unexpected metric ID: %s", m.ID)
+		}
 	}
+
+	// Перезаписываем существующую метрику
+	newValue := 999.99
+	metric1.Value = utils.ToPointer(newValue)
+	repo.SetGaugeMetric(metric1)
+
+	gauges, err = repo.GetGaugeMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, gauges, 2)
+
+	found := false
+	for _, m := range gauges {
+		if m.ID == metric1.ID {
+			assert.Equal(t, newValue, *m.Value)
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "metric1 not found after overwrite")
 }
 
-// Тест SetGaugeMetric – перезапись существующей метрики
-func TestStorage_SetGaugeMetricOverwrite(t *testing.T) {
-	s := New().(*storage)
-	s.SetGaugeMetric(&models.Metrics{ID: "g", Value: toPtrFloat64(1.0)})
-	s.SetGaugeMetric(&models.Metrics{ID: "g", Value: toPtrFloat64(2.0)})
-	if *s.gauge["g"].Value != 2.0 {
-		t.Errorf("expected 2.0, got %v", *s.gauge["g"].Value)
-	}
-}
-
-// Тест SetCounterMetric – добавление и суммирование
 func TestStorage_SetCounterMetric(t *testing.T) {
-	s := New().(*storage)
+	repo := New().(*storage)
 
-	// Первое добавление
-	metric1 := &models.Metrics{
+	metric := models.Metrics{
 		ID:    "test_counter",
-		Delta: toPtrInt64(10),
-	}
-	s.SetCounterMetric(metric1)
-
-	if len(s.counter) != 1 {
-		t.Errorf("expected 1 counter metric, got %d", len(s.counter))
-	}
-	val, ok := s.counter["test_counter"]
-	if !ok {
-		t.Error("metric not found in counter map")
-	}
-	if val.Delta == nil {
-		t.Error("Delta is nil")
-	} else if *val.Delta != 10 {
-		t.Errorf("expected Delta 10, got %d", *val.Delta)
+		MType: models.Counter,
+		Delta: utils.ToPointer(int64(10)),
 	}
 
-	// Второе добавление – должно суммироваться
-	metric2 := &models.Metrics{
-		ID:    "test_counter",
-		Delta: toPtrInt64(5),
-	}
-	s.SetCounterMetric(metric2)
+	repo.SetCounterMetric(metric)
 
-	val2, ok := s.counter["test_counter"]
-	if !ok {
-		t.Error("metric not found after second add")
-	}
-	if *val2.Delta != 15 {
-		t.Errorf("expected Delta 15 after sum, got %d", *val2.Delta)
-	}
+	// Проверяем через GetMetricByID
+	retrieved, err := repo.GetMetricByID(metric)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(10), *retrieved.Delta)
 
-	// Проверка, что переданный metric был изменён (на сумму)
-	if *metric2.Delta != 15 {
-		t.Errorf("metric2.Delta was modified to %d, expected 15", *metric2.Delta)
+	// Добавляем ещё 5, должно стать 15
+	metric.Delta = utils.ToPointer(int64(5))
+	repo.SetCounterMetric(metric)
+
+	retrieved, err = repo.GetMetricByID(metric)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(15), *retrieved.Delta)
+
+	// Добавляем другую counter метрику
+	metric2 := models.Metrics{
+		ID:    "test_counter_2",
+		MType: models.Counter,
+		Delta: utils.ToPointer(int64(7)),
 	}
+	repo.SetCounterMetric(metric2)
+
+	counters, err := repo.GetCounterMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, counters, 2)
+
+	// Проверяем сумму для первой метрики
+	var found bool
+	for _, m := range counters {
+		if m.ID == "test_counter" {
+			assert.Equal(t, int64(15), *m.Delta)
+			found = true
+		}
+	}
+	assert.True(t, found, "test_counter not found in counters")
 }
 
-// Тест SetCounterMetric – обработка nil Delta
-func TestStorage_SetCounterMetricWithNilDelta(t *testing.T) {
-	s := New().(*storage)
-	metric := &models.Metrics{ID: "nil_delta", Delta: nil}
-	s.SetCounterMetric(metric)
-
-	val, ok := s.counter["nil_delta"]
-	if !ok {
-		t.Error("metric not added")
-	}
-	if val.Delta == nil {
-		t.Error("Delta is nil, expected 0")
-	} else if *val.Delta != 0 {
-		t.Errorf("expected Delta 0, got %d", *val.Delta)
-	}
-	// Проверка, что переданный метрик обновился
-	if metric.Delta == nil {
-		t.Error("metric.Delta should be updated to pointer to 0")
-	} else if *metric.Delta != 0 {
-		t.Errorf("metric.Delta expected 0, got %d", *metric.Delta)
-	}
-}
-
-// Тест GetGaugeMetrics – возврат всех gauge метрик
 func TestStorage_GetGaugeMetrics(t *testing.T) {
-	s := New().(*storage)
-	s.SetGaugeMetric(&models.Metrics{ID: "g1", Value: toPtrFloat64(1.1)})
-	s.SetGaugeMetric(&models.Metrics{ID: "g2", Value: toPtrFloat64(2.2)})
+	repo := New().(*storage)
 
-	metrics, _ := s.GetGaugeMetrics()
-	if len(metrics) != 2 {
-		t.Errorf("expected 2 metrics, got %d", len(metrics))
-	}
-	found := make(map[string]bool)
-	for _, m := range metrics {
-		found[m.ID] = true
-	}
-	if !found["g1"] || !found["g2"] {
-		t.Errorf("missing expected IDs: got %v", found)
+	// Пустой список
+	gauges, err := repo.GetGaugeMetrics()
+	assert.NoError(t, err)
+	assert.Empty(t, gauges)
+
+	// Добавляем метрики
+	metric1 := models.Metrics{ID: "g1", MType: models.Gauge, Value: utils.ToPointer(1.1)}
+	metric2 := models.Metrics{ID: "g2", MType: models.Gauge, Value: utils.ToPointer(2.2)}
+	repo.SetGaugeMetric(metric1)
+	repo.SetGaugeMetric(metric2)
+
+	gauges, err = repo.GetGaugeMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, gauges, 2)
+
+	// Проверяем наличие, порядок не важен
+	expectedValues := map[string]float64{"g1": 1.1, "g2": 2.2}
+	for _, m := range gauges {
+		val, ok := expectedValues[m.ID]
+		assert.True(t, ok, "unexpected metric ID: %s", m.ID)
+		assert.Equal(t, val, *m.Value)
 	}
 }
 
-// Тест GetCounterMetrics – возврат всех counter метрик
 func TestStorage_GetCounterMetrics(t *testing.T) {
-	s := New().(*storage)
-	s.SetCounterMetric(&models.Metrics{ID: "c1", Delta: toPtrInt64(10)})
-	s.SetCounterMetric(&models.Metrics{ID: "c2", Delta: toPtrInt64(20)})
+	repo := New().(*storage)
 
-	metrics, _ := s.GetCounterMetrics()
-	if len(metrics) != 2 {
-		t.Errorf("expected 2 metrics, got %d", len(metrics))
+	// Пустой список
+	counters, err := repo.GetCounterMetrics()
+	assert.NoError(t, err)
+	assert.Empty(t, counters)
+
+	// Добавляем метрики
+	metric1 := models.Metrics{ID: "c1", MType: models.Counter, Delta: utils.ToPointer(int64(10))}
+	metric2 := models.Metrics{ID: "c2", MType: models.Counter, Delta: utils.ToPointer(int64(20))}
+	repo.SetCounterMetric(metric1)
+	repo.SetCounterMetric(metric2)
+
+	counters, err = repo.GetCounterMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, counters, 2)
+
+	expectedValues := map[string]int64{"c1": 10, "c2": 20}
+	for _, m := range counters {
+		val, ok := expectedValues[m.ID]
+		assert.True(t, ok, "unexpected metric ID: %s", m.ID)
+		assert.Equal(t, val, *m.Delta)
 	}
-	found := make(map[string]bool)
-	for _, m := range metrics {
-		found[m.ID] = true
+}
+
+func TestStorage_GetAllMetrics(t *testing.T) {
+	repo := New().(*storage)
+
+	// Пустой список
+	all, err := repo.GetAllMetrics()
+	assert.NoError(t, err)
+	assert.Empty(t, all)
+
+	// Добавляем и gauge и counter
+	g1 := models.Metrics{ID: "g1", MType: models.Gauge, Value: utils.ToPointer(1.1)}
+	g2 := models.Metrics{ID: "g2", MType: models.Gauge, Value: utils.ToPointer(2.2)}
+	c1 := models.Metrics{ID: "c1", MType: models.Counter, Delta: utils.ToPointer(int64(10))}
+	c2 := models.Metrics{ID: "c2", MType: models.Counter, Delta: utils.ToPointer(int64(20))}
+
+	repo.SetGaugeMetric(g1)
+	repo.SetGaugeMetric(g2)
+	repo.SetCounterMetric(c1)
+	repo.SetCounterMetric(c2)
+
+	all, err = repo.GetAllMetrics()
+	assert.NoError(t, err)
+	assert.Len(t, all, 4)
+
+	// Проверяем, что все присутствуют
+	ids := make(map[string]bool)
+	for _, m := range all {
+		ids[m.ID] = true
 	}
-	if !found["c1"] || !found["c2"] {
-		t.Errorf("missing expected IDs: got %v", found)
+	assert.True(t, ids["g1"])
+	assert.True(t, ids["g2"])
+	assert.True(t, ids["c1"])
+	assert.True(t, ids["c2"])
+
+	// Проверяем типы и значения
+	for _, m := range all {
+		switch m.ID {
+		case "g1":
+			assert.Equal(t, models.Gauge, m.MType)
+			assert.Equal(t, 1.1, *m.Value)
+		case "g2":
+			assert.Equal(t, models.Gauge, m.MType)
+			assert.Equal(t, 2.2, *m.Value)
+		case "c1":
+			assert.Equal(t, models.Counter, m.MType)
+			assert.Equal(t, int64(10), *m.Delta)
+		case "c2":
+			assert.Equal(t, models.Counter, m.MType)
+			assert.Equal(t, int64(20), *m.Delta)
+		}
 	}
+}
+
+func TestStorage_GetMetricByID(t *testing.T) {
+	repo := New().(*storage)
+
+	// Добавляем метрики
+	gauge := models.Metrics{ID: "gauge1", MType: models.Gauge, Value: utils.ToPointer(3.14)}
+	counter := models.Metrics{ID: "counter1", MType: models.Counter, Delta: utils.ToPointer(int64(42))}
+	repo.SetGaugeMetric(gauge)
+	repo.SetCounterMetric(counter)
+
+	// Успешный поиск gauge
+	retrieved, err := repo.GetMetricByID(models.Metrics{ID: "gauge1", MType: models.Gauge})
+	assert.NoError(t, err)
+	assert.Equal(t, gauge.ID, retrieved.ID)
+	assert.Equal(t, gauge.MType, retrieved.MType)
+	assert.Equal(t, *gauge.Value, *retrieved.Value)
+
+	// Успешный поиск counter
+	retrieved, err = repo.GetMetricByID(models.Metrics{ID: "counter1", MType: models.Counter})
+	assert.NoError(t, err)
+	assert.Equal(t, counter.ID, retrieved.ID)
+	assert.Equal(t, counter.MType, retrieved.MType)
+	assert.Equal(t, *counter.Delta, *retrieved.Delta)
+
+	// Несуществующий ID
+	_, err = repo.GetMetricByID(models.Metrics{ID: "unknown", MType: models.Gauge})
+	assert.ErrorIs(t, err, models.ErrNotFound)
+
+	_, err = repo.GetMetricByID(models.Metrics{ID: "unknown", MType: models.Counter})
+	assert.ErrorIs(t, err, models.ErrNotFound)
+
+	// Неизвестный тип
+	_, err = repo.GetMetricByID(models.Metrics{ID: "anything", MType: "unknown_type"})
+	assert.ErrorIs(t, err, models.ErrUnknownMetricType)
+
+	// Существующий ID, но неправильный тип (например, gauge ищем как counter)
+	_, err = repo.GetMetricByID(models.Metrics{ID: "gauge1", MType: models.Counter})
+	assert.ErrorIs(t, err, models.ErrNotFound)
+
+	_, err = repo.GetMetricByID(models.Metrics{ID: "counter1", MType: models.Gauge})
+	assert.ErrorIs(t, err, models.ErrNotFound)
 }

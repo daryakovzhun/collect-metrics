@@ -18,19 +18,19 @@ func New() repository.IRepository {
 	}
 }
 
-func (s *storage) SetGaugeMetric(metric *models.Metrics) {
-	s.gauge[metric.ID] = utils.FromPointer(metric)
+func (s *storage) SetGaugeMetric(metric models.Metrics) {
+	s.gauge[metric.ID] = metric
 }
 
-func (s *storage) SetCounterMetric(metric *models.Metrics) {
+func (s *storage) SetCounterMetric(metric models.Metrics) {
 	val, ok := s.counter[metric.ID]
 	if !ok {
-		s.counter[metric.ID] = *metric
+		s.counter[metric.ID] = metric
 	}
 
 	delta := utils.FromPointer(val.Delta) + utils.FromPointer(metric.Delta)
 	metric.Delta = utils.ToPointer(delta)
-	s.counter[metric.ID] = utils.FromPointer(metric)
+	s.counter[metric.ID] = metric
 }
 
 func (s *storage) GetGaugeMetrics() ([]models.Metrics, error) {
@@ -64,7 +64,7 @@ func (s *storage) GetAllMetrics() ([]models.Metrics, error) {
 	return metrics, nil
 }
 
-func (s *storage) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+func (s *storage) GetMetricByID(metric models.Metrics) (models.Metrics, error) {
 	var val models.Metrics
 	var ok bool
 
@@ -74,12 +74,12 @@ func (s *storage) GetMetricByID(metric *models.Metrics) (*models.Metrics, error)
 	case models.Gauge:
 		val, ok = s.gauge[metric.ID]
 	default:
-		return nil, models.ErrUnknownMetricType
+		return models.Metrics{}, models.ErrUnknownMetricType
 	}
 
 	if !ok {
-		return nil, models.ErrNotFound
+		return models.Metrics{}, models.ErrNotFound
 	}
 
-	return &val, nil
+	return val, nil
 }

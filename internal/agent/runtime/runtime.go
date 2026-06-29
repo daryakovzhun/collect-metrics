@@ -32,17 +32,16 @@ func (a *rtAgent) Collect(ctx context.Context) {
 		ticker := time.NewTicker(a.cfg.PollInterval)
 		defer ticker.Stop()
 
-		poolCount := int64(0)
-
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			var memStats runtime.MemStats
-			runtime.ReadMemStats(&memStats)
-			a.collectGaugeMetrics(memStats)
-			a.collectCounterMetrics(poolCount)
-			poolCount++
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				var memStats runtime.MemStats
+				runtime.ReadMemStats(&memStats)
+				a.collectGaugeMetrics(memStats)
+				a.collectCounterMetrics()
+			}
 		}
 	}()
 }
@@ -77,21 +76,21 @@ func (a *rtAgent) collectGaugeMetrics(memStats runtime.MemStats) {
 	a.SetGaugeMetric(toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
 }
 
-func (a *rtAgent) collectCounterMetrics(poolCount int64) {
-	a.SetCounterMetric(toCounterMetric(PollCount, poolCount))
+func (a *rtAgent) collectCounterMetrics() {
+	a.SetCounterMetric(toCounterMetric(PollCount, 1))
 	a.SetCounterMetric(toCounterMetric(RandomValue, rand.Int64()))
 }
 
-func toGaugeMetric(name string, value float64) *models.Metrics {
-	return &models.Metrics{
+func toGaugeMetric(name string, value float64) models.Metrics {
+	return models.Metrics{
 		ID:    name,
 		MType: models.Gauge,
 		Value: utils.ToPointer(value),
 	}
 }
 
-func toCounterMetric(name string, value int64) *models.Metrics {
-	return &models.Metrics{
+func toCounterMetric(name string, value int64) models.Metrics {
+	return models.Metrics{
 		ID:    name,
 		MType: models.Counter,
 		Delta: utils.ToPointer(value),

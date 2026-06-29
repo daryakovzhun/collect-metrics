@@ -21,7 +21,7 @@ func (h *Handler) SetMetric(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.domain.SetMetric(r.Context(), metric)
+	err = h.domain.SetMetric(r.Context(), &metric)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -37,7 +37,7 @@ func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err = h.domain.GetMetric(r.Context(), metric)
+	metric, err = h.domain.GetMetric(r.Context(), &metric)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -104,7 +104,7 @@ func (h *Handler) GetAllMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getMetricFromReq(r *http.Request, parseValue bool) (*models.Metrics, error) {
+func getMetricFromReq(r *http.Request, parseValue bool) (models.Metrics, error) {
 	metric := models.Metrics{
 		ID:    chi.URLParam(r, namePath),
 		MType: chi.URLParam(r, typePath),
@@ -113,7 +113,7 @@ func getMetricFromReq(r *http.Request, parseValue bool) (*models.Metrics, error)
 	}
 
 	if len(metric.ID) == 0 {
-		return nil, models.ErrEmptyMetricName
+		return models.Metrics{}, models.ErrEmptyMetricName
 	}
 
 	if parseValue {
@@ -121,21 +121,21 @@ func getMetricFromReq(r *http.Request, parseValue bool) (*models.Metrics, error)
 		case models.Gauge:
 			value, err := strconv.ParseFloat(chi.URLParam(r, valuePath), 64)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse metric gauge value: %w", err)
+				return models.Metrics{}, fmt.Errorf("failed to parse metric gauge value: %w", err)
 			}
 
 			metric.Value = &value
 		case models.Counter:
 			delta, err := strconv.ParseInt(chi.URLParam(r, valuePath), 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse metric counter value: %w", err)
+				return models.Metrics{}, fmt.Errorf("failed to parse metric counter value: %w", err)
 			}
 
 			metric.Delta = &delta
 		default:
-			return nil, models.ErrUnknownMetricType
+			return models.Metrics{}, models.ErrUnknownMetricType
 		}
 	}
 
-	return &metric, nil
+	return metric, nil
 }
