@@ -53,7 +53,12 @@ func (h *Handler) UpdateMetricFromBody(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(metric); err != nil {
+		handleError(w, err)
+	}
 }
 
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
