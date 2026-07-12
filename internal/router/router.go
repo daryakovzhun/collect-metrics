@@ -1,4 +1,4 @@
-package server
+package router
 
 import (
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
@@ -7,7 +7,7 @@ import (
 
 func New(h *handler.Handler) *http.ServeMux {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/update/{metric_type}/{metric_name}/{metric_value}", h.SetMetric)
+	mux.HandleFunc("/update/{metric_type}/{metric_name}/{metric_value}", handler.WithLogger(h.SetMetric))
 
 	return mux
 }

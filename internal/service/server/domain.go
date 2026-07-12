@@ -1,4 +1,4 @@
-package service
+package server
 
 import (
 	"context"
@@ -11,7 +11,7 @@ type domain struct {
 	repo repository.IRepository
 }
 
-func New(repo repository.IRepository) controller.IController {
+func New(repo repository.IRepository) controller.IServerController {
 	return &domain{
 		repo: repo,
 	}
@@ -20,10 +20,12 @@ func New(repo repository.IRepository) controller.IController {
 func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 	switch metric.MType {
 	case models.Gauge:
-		return d.repo.SetGaugeMetric(metric)
+		d.repo.SetGaugeMetric(metric)
 	case models.Counter:
-		return d.repo.SetCounterMetric(metric)
+		d.repo.SetCounterMetric(metric)
+	default:
+		return models.ErrUnknownMetricType
 	}
 
-	return models.ErrUnknownMetricType
+	return nil
 }

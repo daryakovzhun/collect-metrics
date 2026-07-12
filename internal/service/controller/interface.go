@@ -5,6 +5,12 @@ import (
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 )
 
-type IController interface {
+//go:generate mockgen -source=./interface.go -destination=./../../mocks/controllers.go -package=mocks
+
+type IServerController interface {
 	SetMetric(ctx context.Context, metric *models.Metrics) error
+}
+
+type IAgentController interface {
+	Start(ctx context.Context) error
 }
