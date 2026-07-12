@@ -51,10 +51,10 @@ func (mr *MockIServerControllerMockRecorder) GetAllMetrics(ctx interface{}) *gom
 }
 
 // GetMetric mocks base method.
-func (m *MockIServerController) GetMetric(ctx context.Context, metric *models.Metrics) (*models.Metrics, error) {
+func (m *MockIServerController) GetMetric(ctx context.Context, metric *models.Metrics) (models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetric", ctx, metric)
-	ret0, _ := ret[0].(*models.Metrics)
+	ret0, _ := ret[0].(models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

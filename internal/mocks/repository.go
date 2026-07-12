@@ -80,10 +80,10 @@ func (mr *MockIRepositoryMockRecorder) GetGaugeMetrics() *gomock.Call {
 }
 
 // GetMetricByID mocks base method.
-func (m *MockIRepository) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+func (m *MockIRepository) GetMetricByID(metric models.Metrics) (models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetMetricByID", metric)
-	ret0, _ := ret[0].(*models.Metrics)
+	ret0, _ := ret[0].(models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -95,7 +95,7 @@ func (mr *MockIRepositoryMockRecorder) GetMetricByID(metric interface{}) *gomock
 }
 
 // SetCounterMetric mocks base method.
-func (m *MockIRepository) SetCounterMetric(metric *models.Metrics) {
+func (m *MockIRepository) SetCounterMetric(metric models.Metrics) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetCounterMetric", metric)
 }
@@ -107,7 +107,7 @@ func (mr *MockIRepositoryMockRecorder) SetCounterMetric(metric interface{}) *gom
 }
 
 // SetGaugeMetric mocks base method.
-func (m *MockIRepository) SetGaugeMetric(metric *models.Metrics) {
+func (m *MockIRepository) SetGaugeMetric(metric models.Metrics) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SetGaugeMetric", metric)
 }
