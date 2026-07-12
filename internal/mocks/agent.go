@@ -47,12 +47,28 @@ func (mr *MockIAgentMockRecorder) Collect(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockIAgent)(nil).Collect), ctx)
 }
 
+// GetAllMetrics mocks base method.
+func (m *MockIAgent) GetAllMetrics() ([]models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllMetrics")
+	ret0, _ := ret[0].([]models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllMetrics indicates an expected call of GetAllMetrics.
+func (mr *MockIAgentMockRecorder) GetAllMetrics() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIAgent)(nil).GetAllMetrics))
+}
+
 // GetCounterMetrics mocks base method.
-func (m *MockIAgent) GetCounterMetrics() []models.Metrics {
+func (m *MockIAgent) GetCounterMetrics() ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCounterMetrics")
 	ret0, _ := ret[0].([]models.Metrics)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetCounterMetrics indicates an expected call of GetCounterMetrics.
@@ -62,17 +78,33 @@ func (mr *MockIAgentMockRecorder) GetCounterMetrics() *gomock.Call {
 }
 
 // GetGaugeMetrics mocks base method.
-func (m *MockIAgent) GetGaugeMetrics() []models.Metrics {
+func (m *MockIAgent) GetGaugeMetrics() ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGaugeMetrics")
 	ret0, _ := ret[0].([]models.Metrics)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetGaugeMetrics indicates an expected call of GetGaugeMetrics.
 func (mr *MockIAgentMockRecorder) GetGaugeMetrics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGaugeMetrics", reflect.TypeOf((*MockIAgent)(nil).GetGaugeMetrics))
+}
+
+// GetMetricByID mocks base method.
+func (m *MockIAgent) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetricByID", metric)
+	ret0, _ := ret[0].(*models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetricByID indicates an expected call of GetMetricByID.
+func (mr *MockIAgentMockRecorder) GetMetricByID(metric interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricByID", reflect.TypeOf((*MockIAgent)(nil).GetMetricByID), metric)
 }
 
 // SetCounterMetric mocks base method.

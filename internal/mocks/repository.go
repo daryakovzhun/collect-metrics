@@ -34,12 +34,28 @@ func (m *MockIRepository) EXPECT() *MockIRepositoryMockRecorder {
 	return m.recorder
 }
 
+// GetAllMetrics mocks base method.
+func (m *MockIRepository) GetAllMetrics() ([]models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAllMetrics")
+	ret0, _ := ret[0].([]models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAllMetrics indicates an expected call of GetAllMetrics.
+func (mr *MockIRepositoryMockRecorder) GetAllMetrics() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIRepository)(nil).GetAllMetrics))
+}
+
 // GetCounterMetrics mocks base method.
-func (m *MockIRepository) GetCounterMetrics() []models.Metrics {
+func (m *MockIRepository) GetCounterMetrics() ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCounterMetrics")
 	ret0, _ := ret[0].([]models.Metrics)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetCounterMetrics indicates an expected call of GetCounterMetrics.
@@ -49,17 +65,33 @@ func (mr *MockIRepositoryMockRecorder) GetCounterMetrics() *gomock.Call {
 }
 
 // GetGaugeMetrics mocks base method.
-func (m *MockIRepository) GetGaugeMetrics() []models.Metrics {
+func (m *MockIRepository) GetGaugeMetrics() ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetGaugeMetrics")
 	ret0, _ := ret[0].([]models.Metrics)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetGaugeMetrics indicates an expected call of GetGaugeMetrics.
 func (mr *MockIRepositoryMockRecorder) GetGaugeMetrics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGaugeMetrics", reflect.TypeOf((*MockIRepository)(nil).GetGaugeMetrics))
+}
+
+// GetMetricByID mocks base method.
+func (m *MockIRepository) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetricByID", metric)
+	ret0, _ := ret[0].(*models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetMetricByID indicates an expected call of GetMetricByID.
+func (mr *MockIRepositoryMockRecorder) GetMetricByID(metric interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricByID", reflect.TypeOf((*MockIRepository)(nil).GetMetricByID), metric)
 }
 
 // SetCounterMetric mocks base method.

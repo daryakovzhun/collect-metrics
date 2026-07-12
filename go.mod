@@ -3,6 +3,7 @@ module github.com/daryakovzhun/collect-metrics
 go 1.26.4
 
 require (
+	github.com/go-chi/chi/v5 v5.3.0
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.11.1
 )

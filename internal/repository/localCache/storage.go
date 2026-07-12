@@ -33,20 +33,53 @@ func (s *storage) SetCounterMetric(metric *models.Metrics) {
 	s.counter[metric.ID] = utils.FromPointer(metric)
 }
 
-func (s *storage) GetGaugeMetrics() []models.Metrics {
+func (s *storage) GetGaugeMetrics() ([]models.Metrics, error) {
 	gauge := make([]models.Metrics, 0, len(s.gauge))
 	for _, v := range s.gauge {
 		gauge = append(gauge, v)
 	}
 
-	return gauge
+	return gauge, nil
 }
 
-func (s *storage) GetCounterMetrics() []models.Metrics {
+func (s *storage) GetCounterMetrics() ([]models.Metrics, error) {
 	counter := make([]models.Metrics, 0, len(s.counter))
 	for _, v := range s.counter {
 		counter = append(counter, v)
 	}
 
-	return counter
+	return counter, nil
+}
+
+func (s *storage) GetAllMetrics() ([]models.Metrics, error) {
+	metrics := make([]models.Metrics, 0, len(s.gauge)+len(s.counter))
+	for _, v := range s.gauge {
+		metrics = append(metrics, v)
+	}
+
+	for _, v := range s.counter {
+		metrics = append(metrics, v)
+	}
+
+	return metrics, nil
+}
+
+func (s *storage) GetMetricByID(metric *models.Metrics) (*models.Metrics, error) {
+	var val models.Metrics
+	var ok bool
+
+	switch metric.MType {
+	case models.Counter:
+		val, ok = s.counter[metric.ID]
+	case models.Gauge:
+		val, ok = s.gauge[metric.ID]
+	default:
+		return nil, models.ErrUnknownMetricType
+	}
+
+	if !ok {
+		return nil, models.ErrNotFound
+	}
+
+	return &val, nil
 }

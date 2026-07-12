@@ -9,6 +9,8 @@ import (
 
 type IServerController interface {
 	SetMetric(ctx context.Context, metric *models.Metrics) error
+	GetMetric(ctx context.Context, metric *models.Metrics) (*models.Metrics, error)
+	GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
 }
 
 type IAgentController interface {
