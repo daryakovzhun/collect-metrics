@@ -2,8 +2,9 @@ package handler
 
 import (
 	"errors"
-	"fmt"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
+	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -17,5 +18,5 @@ func handleError(w http.ResponseWriter, err error) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	fmt.Fprintln(w, err.Error())
+	logger.Log.Error("handle error", zap.Error(err))
 }
