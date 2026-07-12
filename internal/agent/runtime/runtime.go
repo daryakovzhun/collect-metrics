@@ -74,11 +74,11 @@ func (a *rtAgent) collectGaugeMetrics(memStats runtime.MemStats) {
 	a.SetGaugeMetric(toGaugeMetric(StackSys, float64(memStats.StackSys)))
 	a.SetGaugeMetric(toGaugeMetric(Sys, float64(memStats.Sys)))
 	a.SetGaugeMetric(toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
+	a.SetGaugeMetric(toGaugeMetric(RandomValue, rand.Float64()))
 }
 
 func (a *rtAgent) collectCounterMetrics() {
 	a.SetCounterMetric(toCounterMetric(PollCount, 1))
-	a.SetCounterMetric(toCounterMetric(RandomValue, rand.Int64()))
 }
 
 func toGaugeMetric(name string, value float64) models.Metrics {
