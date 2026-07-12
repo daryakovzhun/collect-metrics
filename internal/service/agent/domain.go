@@ -45,7 +45,7 @@ func (d *domain) Start(ctx context.Context) error {
 		case <-ticker.C:
 			if err := d.sendMetrics(); err != nil {
 				logger.Log.Error("failed to send metrics", zap.Error(err))
-				return err
+				continue
 			}
 		}
 	}

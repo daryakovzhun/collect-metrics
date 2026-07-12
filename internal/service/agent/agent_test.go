@@ -72,9 +72,9 @@ func TestDomain_Start(t *testing.T) {
 				// Возвращаем метрику, которая вызовет ошибку при отправке
 				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{
 					{ID: "test", Value: toPtrFloat64(1.0)},
-				}, errors.New("test")).Times(1)
+				}, errors.New("test")).AnyTimes()
 			},
-			wantErr: true,
+			wantErr: false,
 		},
 	}
 
