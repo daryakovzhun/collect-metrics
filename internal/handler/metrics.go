@@ -47,7 +47,13 @@ func (h *Handler) UpdateMetricFromBody(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.domain.SetMetric(r.Context(), &metric)
+	err := validateMetric(metric)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.domain.SetMetric(r.Context(), &metric)
 	if err != nil {
 		handleError(w, err)
 		return
