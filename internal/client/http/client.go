@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
@@ -59,12 +60,19 @@ func (h *httpClient) sendRequest(metrics *models.Metrics) (*http.Response, error
 		return nil, fmt.Errorf("marshal metrics error, err: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, resURL, bytes.NewBuffer(body))
+	compressBody, err := compress(body)
+	if err != nil {
+		return nil, fmt.Errorf("compress metrics error, err: %w", err)
+	}
+
+	req, err := http.NewRequest(http.MethodPost, resURL, compressBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Encoding", "gzip")
+	req.Header.Set("Accept-Encoding", "gzip")
 
 	resp, err := h.client.Do(req)
 	if err != nil {
@@ -72,6 +80,23 @@ func (h *httpClient) sendRequest(metrics *models.Metrics) (*http.Response, error
 	}
 
 	return resp, nil
+}
+
+func compress(data []byte) (*bytes.Buffer, error) {
+	var buf bytes.Buffer
+	gzWriter, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create gzip writer: %w", err)
+	}
+
+	if _, err = gzWriter.Write(data); err != nil {
+		return nil, fmt.Errorf("gzip write error: %w", err)
+	}
+	if err = gzWriter.Close(); err != nil {
+		return nil, fmt.Errorf("gzip close error: %w", err)
+	}
+
+	return &buf, nil
 }
 
 func formURL(url string, metrics *models.Metrics) (string, error) {
