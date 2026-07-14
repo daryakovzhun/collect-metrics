@@ -7,17 +7,19 @@ import (
 	httpclient "github.com/daryakovzhun/collect-metrics/internal/client/http"
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
+	"github.com/daryakovzhun/collect-metrics/internal/repository/filestore"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/localcache"
 	"github.com/daryakovzhun/collect-metrics/internal/router"
 	"github.com/daryakovzhun/collect-metrics/internal/service/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/service/server"
+	"github.com/daryakovzhun/collect-metrics/internal/utils"
 	"go.uber.org/zap"
 	"net/http"
 
 	"time"
 )
 
-func Run() error {
+func Run(ctx context.Context) error {
 	if err := logger.Initialize(zap.InfoLevel.String()); err != nil {
 		return err
 	}
@@ -28,7 +30,12 @@ func Run() error {
 	}
 
 	storage := localcache.New()
-	domain := server.New(storage)
+	fileStorage := filestore.New(&filestore.Config{Path: cfg.FileStoragePath})
+
+	domain := server.New(ctx, &server.Config{
+		StoreInterval: time.Duration(utils.FromPointer(cfg.StoreInterval)) * time.Second,
+		Restore:       cfg.Restore,
+	}, storage, fileStorage)
 	h := handler.New(domain)
 	router := router.New(h)
 
