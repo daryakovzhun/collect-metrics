@@ -22,7 +22,7 @@ type storage struct {
 }
 
 func New(cfg *Config) repository.IFile {
-	err := ensureDirectories(cfg.Path)
+	err := ensureFileExists(cfg.Path)
 	if err != nil {
 		logger.Log.Error("failed to ensure filesystem directory", zap.String("path", cfg.Path), zap.Error(err))
 	}
@@ -30,14 +30,14 @@ func New(cfg *Config) repository.IFile {
 	return &storage{cfg: cfg}
 }
 
-// ensureDirectories создаёт директории для файла, если их нет,
-// и проверяет существование самого файла.
-func ensureDirectories(path string) error {
+// ensureFileExists проверяет существование файла, создаёт все необходимые папки
+// и сам файл, если он отсутствует.
+// Возвращает ошибку, если что-то пошло не так.
+func ensureFileExists(path string) error {
 	// 1. Проверяем, существует ли файл
 	_, err := os.Stat(path)
 	if err == nil {
-		// Файл уже существует – ничего не делаем
-		fmt.Println("Файл существует")
+		fmt.Println("Файл уже существует")
 		return nil
 	}
 
@@ -45,20 +45,27 @@ func ensureDirectories(path string) error {
 		// 2. Файла нет – выделяем директорию из пути
 		dir := filepath.Dir(path)
 
-		// Если директория не пустая и не текущая ( "." ), создаём её
+		// Если директория не пустая и не текущая, создаём её рекурсивно
 		if dir != "" && dir != "." {
 			err := os.MkdirAll(dir, 0755)
 			if err != nil {
 				return fmt.Errorf("не удалось создать директории: %w", err)
 			}
-			fmt.Printf("Директории %s успешно созданы\n", dir)
-		} else {
-			fmt.Println("Файл находится в корневой папке, создавать папки не нужно")
+			fmt.Printf("Директории %s созданы\n", dir)
 		}
+
+		// 3. Создаём сам файл
+		file, err := os.Create(path)
+		if err != nil {
+			return fmt.Errorf("не удалось создать файл: %w", err)
+		}
+		defer file.Close() // закрываем сразу, файл пуст
+
+		fmt.Printf("Файл %s создан\n", path)
 		return nil
 	}
 
-	// Прочие ошибки (например, нет прав доступа)
+	// Прочие ошибки (например, нет прав доступа к папке)
 	return fmt.Errorf("ошибка при проверке файла: %w", err)
 }
 
