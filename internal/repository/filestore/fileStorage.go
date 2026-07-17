@@ -2,9 +2,13 @@ package filestore
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/daryakovzhun/collect-metrics/internal/repository"
+	"go.uber.org/zap"
 	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -18,7 +22,44 @@ type storage struct {
 }
 
 func New(cfg *Config) repository.IFile {
+	err := ensureDirectories(cfg.Path)
+	if err != nil {
+		logger.Log.Error("failed to ensure filesystem directory", zap.String("path", cfg.Path), zap.Error(err))
+	}
+
 	return &storage{cfg: cfg}
+}
+
+// ensureDirectories создаёт директории для файла, если их нет,
+// и проверяет существование самого файла.
+func ensureDirectories(path string) error {
+	// 1. Проверяем, существует ли файл
+	_, err := os.Stat(path)
+	if err == nil {
+		// Файл уже существует – ничего не делаем
+		fmt.Println("Файл существует")
+		return nil
+	}
+
+	if os.IsNotExist(err) {
+		// 2. Файла нет – выделяем директорию из пути
+		dir := filepath.Dir(path)
+
+		// Если директория не пустая и не текущая ( "." ), создаём её
+		if dir != "" && dir != "." {
+			err := os.MkdirAll(dir, 0755)
+			if err != nil {
+				return fmt.Errorf("не удалось создать директории: %w", err)
+			}
+			fmt.Printf("Директории %s успешно созданы\n", dir)
+		} else {
+			fmt.Println("Файл находится в корневой папке, создавать папки не нужно")
+		}
+		return nil
+	}
+
+	// Прочие ошибки (например, нет прав доступа)
+	return fmt.Errorf("ошибка при проверке файла: %w", err)
 }
 
 func (f *storage) Write(metrics []models.Metrics) error {
