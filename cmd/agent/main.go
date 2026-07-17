@@ -10,17 +10,8 @@ import (
 )
 
 func main() {
-	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	eg, egCtx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		select {
-		case <-ctx.Done():
-			cancel()
-			return nil
-		case <-egCtx.Done():
-			return nil
-		}
-	})
 
 	eg.Go(func() error {
 		return app.RunAgent(egCtx)
