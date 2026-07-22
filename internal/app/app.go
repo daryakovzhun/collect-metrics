@@ -17,7 +17,10 @@ import (
 )
 
 func Run() error {
-	cfg := getServerConfig()
+	cfg, err := getServerConfig()
+	if err != nil {
+		return fmt.Errorf("get server config: %w", err)
+	}
 
 	storage := localCache.New()
 	domain := server.New(storage)
@@ -29,7 +32,10 @@ func Run() error {
 }
 
 func RunAgent(ctx context.Context) error {
-	cfg := getAgentConfig()
+	cfg, err := getAgentConfig()
+	if err != nil {
+		return fmt.Errorf("get agent config: %w", err)
+	}
 
 	storage := localCache.New()
 	ag := runtime.New(&runtime.Config{PollInterval: time.Duration(cfg.PollInterval) * time.Second}, storage)
