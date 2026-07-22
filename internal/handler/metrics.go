@@ -205,3 +205,13 @@ func getMetricFromReq(r *http.Request, parseValue bool) (models.Metrics, error) 
 
 	return metric, nil
 }
+
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	err := h.domain.Ping(r.Context())
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to ping, err: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

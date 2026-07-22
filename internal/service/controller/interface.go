@@ -11,6 +11,7 @@ type IServerController interface {
 	SetMetric(ctx context.Context, metric *models.Metrics) error
 	GetMetric(ctx context.Context, metric *models.Metrics) (models.Metrics, error)
 	GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
+	Ping(ctx context.Context) error
 }
 
 type IAgentController interface {

@@ -65,6 +65,20 @@ func (mr *MockIServerControllerMockRecorder) GetMetric(ctx, metric interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetric", reflect.TypeOf((*MockIServerController)(nil).GetMetric), ctx, metric)
 }
 
+// Ping mocks base method.
+func (m *MockIServerController) Ping(ctx context.Context) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Ping", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Ping indicates an expected call of Ping.
+func (mr *MockIServerControllerMockRecorder) Ping(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockIServerController)(nil).Ping), ctx)
+}
+
 // SetMetric mocks base method.
 func (m *MockIServerController) SetMetric(ctx context.Context, metric *models.Metrics) error {
 	m.ctrl.T.Helper()

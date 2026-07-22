@@ -19,14 +19,16 @@ type Config struct {
 type domain struct {
 	cfg         *Config
 	repo        repository.IRepository
+	database    repository.IRepository
 	fileStorage repository.IFile
 }
 
-func New(ctx context.Context, cfg *Config, repo repository.IRepository,
+func New(ctx context.Context, cfg *Config, repo, database repository.IRepository,
 	fileStorage repository.IFile) controller.IServerController {
 	d := &domain{
 		cfg:         cfg,
 		repo:        repo,
+		database:    database,
 		fileStorage: fileStorage,
 	}
 
@@ -115,4 +117,8 @@ func (d *domain) GetMetric(ctx context.Context, metric *models.Metrics) (models.
 
 func (d *domain) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
 	return d.repo.GetAllMetrics()
+}
+
+func (d *domain) Ping(ctx context.Context) error {
+	return d.database.Ping(ctx)
 }
