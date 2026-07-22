@@ -1,6 +1,8 @@
 package httpclient
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
@@ -11,6 +13,7 @@ import (
 var (
 	updateCounterEndpoint = "/update/%s/%s/%d"
 	updateGaugeEndpoint   = "/update/%s/%s/%f"
+	updateEndpoint        = "/update"
 )
 
 type Config struct {
@@ -48,22 +51,24 @@ func (h *httpClient) SendMetric(metric *models.Metrics) error {
 	return nil
 }
 
-func (h *httpClient) sendRequest(metric *models.Metrics) (*http.Response, error) {
-	resURL, err := formURL(h.cfg.URL, metric)
+func (h *httpClient) sendRequest(metrics *models.Metrics) (*http.Response, error) {
+	resURL := h.cfg.URL + updateEndpoint
+
+	body, err := json.Marshal(metrics)
 	if err != nil {
-		return nil, fmt.Errorf("failed to form url, err: %w", err)
+		return nil, fmt.Errorf("marshal metrics error, err: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, resURL, http.NoBody)
+	req, err := http.NewRequest(http.MethodPost, resURL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "text/plain")
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := h.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return nil, fmt.Errorf("could not send request: %w", err)
 	}
 
 	return resp, nil

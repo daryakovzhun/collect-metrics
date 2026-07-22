@@ -47,32 +47,17 @@ func (mr *MockIAgentMockRecorder) Collect(ctx interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Collect", reflect.TypeOf((*MockIAgent)(nil).Collect), ctx)
 }
 
-// GetCounterMetrics mocks base method.
-func (m *MockIAgent) GetCounterMetrics() ([]models.Metrics, error) {
+// GetAllMetrics mocks base method.
+func (m *MockIAgent) GetAllMetrics() ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCounterMetrics")
+	ret := m.ctrl.Call(m, "GetAllMetrics")
 	ret0, _ := ret[0].([]models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetCounterMetrics indicates an expected call of GetCounterMetrics.
-func (mr *MockIAgentMockRecorder) GetCounterMetrics() *gomock.Call {
+// GetAllMetrics indicates an expected call of GetAllMetrics.
+func (mr *MockIAgentMockRecorder) GetAllMetrics() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCounterMetrics", reflect.TypeOf((*MockIAgent)(nil).GetCounterMetrics))
-}
-
-// GetGaugeMetrics mocks base method.
-func (m *MockIAgent) GetGaugeMetrics() ([]models.Metrics, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGaugeMetrics")
-	ret0, _ := ret[0].([]models.Metrics)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetGaugeMetrics indicates an expected call of GetGaugeMetrics.
-func (mr *MockIAgentMockRecorder) GetGaugeMetrics() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGaugeMetrics", reflect.TypeOf((*MockIAgent)(nil).GetGaugeMetrics))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIAgent)(nil).GetAllMetrics))
 }

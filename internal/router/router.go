@@ -12,8 +12,16 @@ func New(h *handler.Handler) chi.Router {
 	r.Use(middleware.Recoverer)
 	r.Use(handler.WithLogger())
 
-	r.Post("/update/{metric_type}/{metric_name}/{metric_value}", h.SetMetric)
-	r.Get("/value/{metric_type}/{metric_name}", h.GetMetric)
+	r.Route("/update", func(r chi.Router) {
+		r.Post("/", h.UpdateMetricFromBody)
+		r.Post("/{metric_type}/{metric_name}/{metric_value}", h.SetMetric)
+	})
+
+	r.Route("/value", func(r chi.Router) {
+		r.Post("/", h.GetMetricFromBody)
+		r.Get("/{metric_type}/{metric_name}", h.GetMetric)
+	})
+
 	r.Get("/", h.GetAllMetrics)
 
 	return r

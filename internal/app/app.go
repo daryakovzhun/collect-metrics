@@ -7,7 +7,7 @@ import (
 	httpclient "github.com/daryakovzhun/collect-metrics/internal/client/http"
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
-	"github.com/daryakovzhun/collect-metrics/internal/repository/localCache"
+	"github.com/daryakovzhun/collect-metrics/internal/repository/localcache"
 	"github.com/daryakovzhun/collect-metrics/internal/router"
 	"github.com/daryakovzhun/collect-metrics/internal/service/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/service/server"
@@ -27,7 +27,7 @@ func Run() error {
 		return fmt.Errorf("get server config: %w", err)
 	}
 
-	storage := localCache.New()
+	storage := localcache.New()
 	domain := server.New(storage)
 	h := handler.New(domain)
 	router := router.New(h)
@@ -42,7 +42,7 @@ func RunAgent(ctx context.Context) error {
 		return fmt.Errorf("get agent config: %w", err)
 	}
 
-	storage := localCache.New()
+	storage := localcache.New()
 	ag := runtime.New(&runtime.Config{PollInterval: time.Duration(cfg.PollInterval) * time.Second}, storage)
 	cl := httpclient.New(&httpclient.Config{
 		Timeout: 2 * time.Second,

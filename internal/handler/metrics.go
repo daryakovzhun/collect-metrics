@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -28,6 +30,41 @@ func (h *Handler) SetMetric(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) UpdateMetricFromBody(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	ctype := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(ctype, "application/json") {
+		http.Error(w, "unsupported content type", http.StatusBadRequest)
+		return
+	}
+
+	var metric models.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&metric); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := validateMetric(metric)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = h.domain.SetMetric(r.Context(), &metric)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(metric); err != nil {
+		handleError(w, err)
+	}
 }
 
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
@@ -56,6 +93,35 @@ func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	if _, err = w.Write(body); err != nil {
+		handleError(w, err)
+	}
+}
+
+func (h *Handler) GetMetricFromBody(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	ctype := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(ctype, "application/json") {
+		http.Error(w, "unsupported content type", http.StatusBadRequest)
+		return
+	}
+
+	var metric models.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&metric); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	metric, err := h.domain.GetMetric(r.Context(), &metric)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(metric); err != nil {
 		handleError(w, err)
 	}
 }
