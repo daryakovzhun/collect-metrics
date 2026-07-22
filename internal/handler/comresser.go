@@ -4,13 +4,14 @@ import (
 	"compress/gzip"
 	"io"
 	"net/http"
+	"strings"
 )
 
-// compressWriter реализует интерфейс http.ResponseWriter и позволяет прозрачно для сервера
-// сжимать передаваемые данные и выставлять правильные HTTP-заголовки
 type compressWriter struct {
-	w  http.ResponseWriter
-	zw *gzip.Writer
+	w             http.ResponseWriter
+	zw            *gzip.Writer
+	compress      bool
+	headerWritten bool
 }
 
 func newCompressWriter(w http.ResponseWriter) *compressWriter {
@@ -24,20 +25,48 @@ func (c *compressWriter) Header() http.Header {
 	return c.w.Header()
 }
 
-func (c *compressWriter) Write(p []byte) (int, error) {
-	return c.zw.Write(p)
-}
-
 func (c *compressWriter) WriteHeader(statusCode int) {
-	if statusCode < 300 {
+	if c.headerWritten {
+		return
+	}
+	c.headerWritten = true
+
+	if statusCode < 300 && shouldCompress(c.w.Header()) {
+		c.compress = true
 		c.w.Header().Set("Content-Encoding", "gzip")
 	}
 	c.w.WriteHeader(statusCode)
 }
 
-// Close закрывает gzip.Writer и досылает все данные из буфера.
+func (c *compressWriter) Write(p []byte) (int, error) {
+	if !c.headerWritten {
+		c.WriteHeader(http.StatusOK)
+	}
+	if c.compress {
+		return c.zw.Write(p)
+	}
+	return c.w.Write(p)
+}
+
 func (c *compressWriter) Close() error {
-	return c.zw.Close()
+	if c.compress {
+		return c.zw.Close()
+	}
+	return nil
+}
+
+func shouldCompress(h http.Header) bool {
+	if h.Get("Content-Encoding") != "" {
+		return false
+	}
+	contentType := h.Get("Content-Type")
+	if contentType == "" {
+		return false
+	}
+	return strings.HasPrefix(contentType, "application/json") ||
+		strings.HasPrefix(contentType, "text/") ||
+		strings.HasPrefix(contentType, "application/xml") ||
+		strings.HasPrefix(contentType, "application/javascript")
 }
 
 // compressReader реализует интерфейс io.ReadCloser и позволяет прозрачно для сервера

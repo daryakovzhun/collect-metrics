@@ -3,12 +3,22 @@ package main
 import (
 	"context"
 	"github.com/daryakovzhun/collect-metrics/internal/app"
+	"golang.org/x/sync/errgroup"
 	"log"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	err := app.RunAgent(context.Background())
-	if err != nil {
+	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	eg, egCtx := errgroup.WithContext(ctx)
+
+	eg.Go(func() error {
+		return app.RunAgent(egCtx)
+	})
+
+	if err := eg.Wait(); err != nil {
 		log.Fatal(err)
+		return
 	}
 }

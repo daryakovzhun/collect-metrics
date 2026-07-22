@@ -12,3 +12,8 @@ type IRepository interface {
 	GetAllMetrics() ([]models.Metrics, error)
 	GetMetricByID(metric models.Metrics) (models.Metrics, error)
 }
+
+type IFile interface {
+	Write(metrics []models.Metrics) error
+	Read() ([]models.Metrics, error)
+}

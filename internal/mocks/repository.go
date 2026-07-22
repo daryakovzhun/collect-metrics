@@ -117,3 +117,55 @@ func (mr *MockIRepositoryMockRecorder) SetGaugeMetric(metric interface{}) *gomoc
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGaugeMetric", reflect.TypeOf((*MockIRepository)(nil).SetGaugeMetric), metric)
 }
+
+// MockIFile is a mock of IFile interface.
+type MockIFile struct {
+	ctrl     *gomock.Controller
+	recorder *MockIFileMockRecorder
+}
+
+// MockIFileMockRecorder is the mock recorder for MockIFile.
+type MockIFileMockRecorder struct {
+	mock *MockIFile
+}
+
+// NewMockIFile creates a new mock instance.
+func NewMockIFile(ctrl *gomock.Controller) *MockIFile {
+	mock := &MockIFile{ctrl: ctrl}
+	mock.recorder = &MockIFileMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIFile) EXPECT() *MockIFileMockRecorder {
+	return m.recorder
+}
+
+// Read mocks base method.
+func (m *MockIFile) Read() ([]models.Metrics, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Read")
+	ret0, _ := ret[0].([]models.Metrics)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Read indicates an expected call of Read.
+func (mr *MockIFileMockRecorder) Read() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Read", reflect.TypeOf((*MockIFile)(nil).Read))
+}
+
+// Write mocks base method.
+func (m *MockIFile) Write(metrics []models.Metrics) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Write", metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Write indicates an expected call of Write.
+func (mr *MockIFileMockRecorder) Write(metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Write", reflect.TypeOf((*MockIFile)(nil).Write), metrics)
+}
