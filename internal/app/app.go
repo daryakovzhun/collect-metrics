@@ -6,17 +6,22 @@ import (
 	"github.com/daryakovzhun/collect-metrics/internal/agent/runtime"
 	httpclient "github.com/daryakovzhun/collect-metrics/internal/client/http"
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/localCache"
 	"github.com/daryakovzhun/collect-metrics/internal/router"
 	"github.com/daryakovzhun/collect-metrics/internal/service/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/service/server"
-	"log/slog"
+	"go.uber.org/zap"
 	"net/http"
 
 	"time"
 )
 
 func Run() error {
+	if err := logger.Initialize(zap.InfoLevel.String()); err != nil {
+		return err
+	}
+
 	cfg, err := getServerConfig()
 	if err != nil {
 		return fmt.Errorf("get server config: %w", err)
@@ -27,7 +32,7 @@ func Run() error {
 	h := handler.New(domain)
 	router := router.New(h)
 
-	slog.Info(fmt.Sprintf("SERVER START %s", cfg.Address))
+	logger.Log.Info(fmt.Sprintf("SERVER START %s", cfg.Address))
 	return http.ListenAndServe(cfg.Address, router)
 }
 
