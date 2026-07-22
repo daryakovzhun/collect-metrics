@@ -11,6 +11,7 @@ func New(h *handler.Handler) chi.Router {
 
 	r.Use(middleware.Recoverer)
 	r.Use(handler.WithLogger())
+	r.Use(handler.WithGzipMiddleware)
 
 	r.Route("/update", func(r chi.Router) {
 		r.Post("/", h.UpdateMetricFromBody)
