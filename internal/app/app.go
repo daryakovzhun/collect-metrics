@@ -8,6 +8,7 @@ import (
 	httpclient "github.com/daryakovzhun/collect-metrics/internal/client/http"
 	"github.com/daryakovzhun/collect-metrics/internal/handler"
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
+	"github.com/daryakovzhun/collect-metrics/internal/repository"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/filestore"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/localcache"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/pg"
@@ -34,17 +35,22 @@ func Run(ctx context.Context) error {
 		return fmt.Errorf("get server config: %w", err)
 	}
 
-	storage := localcache.New()
-	fileStorage := filestore.New(&filestore.Config{Path: cfg.FileStoragePath})
-	dbStorage, err := pg.New(ctx, &pg.Config{DatabaseDNS: cfg.DB})
-	if err != nil {
-		return fmt.Errorf("failed to connect database, err: %w", err)
+	var storage repository.IRepository
+	if len(cfg.DB) > 0 {
+		storage, err = pg.New(ctx, &pg.Config{DatabaseDNS: cfg.DB})
+		if err != nil {
+			return fmt.Errorf("failed to connect database, err: %w", err)
+		}
+	} else {
+		storage = localcache.New()
 	}
+
+	fileStorage := filestore.New(&filestore.Config{Path: cfg.FileStoragePath})
 
 	domain := server.New(egCtx, &server.Config{
 		StoreInterval: time.Duration(utils.FromPointer(cfg.StoreInterval)) * time.Second,
 		Restore:       utils.FromPointer(cfg.Restore),
-	}, storage, dbStorage, fileStorage)
+	}, storage, fileStorage)
 	h := handler.New(domain)
 	router := router.New(h)
 

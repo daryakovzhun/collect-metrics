@@ -19,16 +19,14 @@ type Config struct {
 type domain struct {
 	cfg         *Config
 	repo        repository.IRepository
-	database    repository.IRepository
 	fileStorage repository.IFile
 }
 
-func New(ctx context.Context, cfg *Config, repo, database repository.IRepository,
+func New(ctx context.Context, cfg *Config, repo repository.IRepository,
 	fileStorage repository.IFile) controller.IServerController {
 	d := &domain{
 		cfg:         cfg,
 		repo:        repo,
-		database:    database,
 		fileStorage: fileStorage,
 	}
 
@@ -67,7 +65,7 @@ func (d *domain) asyncSaveMetrics(ctx context.Context) {
 			return
 
 		case <-ticker.C:
-			if err := d.uploadMetrics(); err != nil {
+			if err := d.uploadMetrics(ctx); err != nil {
 				logger.Log.Error("failed to save metrics", zap.Error(err))
 				continue
 			}
@@ -77,8 +75,8 @@ func (d *domain) asyncSaveMetrics(ctx context.Context) {
 	}
 }
 
-func (d *domain) uploadMetrics() error {
-	metrics, err := d.repo.GetAllMetrics()
+func (d *domain) uploadMetrics(ctx context.Context) error {
+	metrics, err := d.repo.GetAllMetrics(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get all metrics from localcahe: %w", err)
 	}
@@ -94,9 +92,15 @@ func (d *domain) uploadMetrics() error {
 func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 	switch metric.MType {
 	case models.Gauge:
-		d.repo.SetGaugeMetric(*metric)
+		err := d.repo.SetGaugeMetric(ctx, *metric)
+		if err != nil {
+			return fmt.Errorf("failed to set gauge: %w", err)
+		}
 	case models.Counter:
-		d.repo.SetCounterMetric(*metric)
+		err := d.repo.SetCounterMetric(ctx, *metric)
+		if err != nil {
+			return fmt.Errorf("failed to set counter: %w", err)
+		}
 	default:
 		return models.ErrUnknownMetricType
 	}
@@ -112,13 +116,13 @@ func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 }
 
 func (d *domain) GetMetric(ctx context.Context, metric *models.Metrics) (models.Metrics, error) {
-	return d.repo.GetMetricByID(*metric)
+	return d.repo.GetMetricByID(ctx, *metric)
 }
 
 func (d *domain) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
-	return d.repo.GetAllMetrics()
+	return d.repo.GetAllMetrics(ctx)
 }
 
 func (d *domain) Ping(ctx context.Context) error {
-	return d.database.Ping(ctx)
+	return d.repo.Ping(ctx)
 }

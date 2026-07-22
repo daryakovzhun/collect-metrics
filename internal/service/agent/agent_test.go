@@ -46,7 +46,7 @@ func TestDomain_Start(t *testing.T) {
 			},
 			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
 				agentMock.EXPECT().Collect(gomock.Any()).Times(1)
-				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{}, nil).AnyTimes()
+				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{}, nil).AnyTimes()
 				// SendMetric не вызывается, т.к. списки пусты
 			},
 			wantErr: false,
@@ -70,7 +70,7 @@ func TestDomain_Start(t *testing.T) {
 			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
 				agentMock.EXPECT().Collect(gomock.Any()).Times(1)
 				// Возвращаем метрику, которая вызовет ошибку при отправке
-				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{
+				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "test", Value: toPtrFloat64(1.0)},
 				}, errors.New("test")).AnyTimes()
 			},
@@ -119,7 +119,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 		{
 			name: "successful send all metrics",
 			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{
+				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "g1", Value: toPtrFloat64(1.1)},
 					{ID: "g2", Value: toPtrFloat64(2.2)},
 					{ID: "c1", Delta: toPtrInt64(10)},
@@ -132,7 +132,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 		{
 			name: "error on gauge send",
 			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{
+				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "g1", Value: toPtrFloat64(1.1)},
 				}, nil).Times(1)
 				clientMock.EXPECT().SendMetric(gomock.Any()).Return(errors.New("gauge send error")).Times(1)
@@ -143,7 +143,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 		{
 			name: "error on counter send",
 			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics().Return([]models.Metrics{
+				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "c1", Delta: toPtrInt64(5)},
 				}, nil).Times(1)
 				clientMock.EXPECT().SendMetric(gomock.Any()).Return(errors.New("counter send error")).Times(1)
@@ -168,7 +168,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 				client: clientMock,
 			}
 
-			err := d.sendMetrics()
+			err := d.sendMetrics(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sendMetrics() error = %v, wantErr %v", err, tt.wantErr)
 			}

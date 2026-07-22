@@ -25,30 +25,32 @@ func (s *storage) Ping(ctx context.Context) error {
 	return nil
 }
 
-func (s *storage) SetGaugeMetric(metric models.Metrics) {
+func (s *storage) SetGaugeMetric(ctx context.Context, metric models.Metrics) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.gauge[metric.ID] = metric
+	return nil
 }
 
-func (s *storage) SetCounterMetric(metric models.Metrics) {
+func (s *storage) SetCounterMetric(ctx context.Context, metric models.Metrics) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	val, ok := s.counter[metric.ID]
 	if !ok {
 		s.counter[metric.ID] = metric
-		return
+		return nil
 	}
 
 	delta := utils.FromPointer(val.Delta) + utils.FromPointer(metric.Delta)
 	metric.Delta = utils.ToPointer(delta)
 
 	s.counter[metric.ID] = metric
+	return nil
 }
 
-func (s *storage) GetGaugeMetrics() ([]models.Metrics, error) {
+func (s *storage) GetGaugeMetrics(ctx context.Context) ([]models.Metrics, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -60,7 +62,7 @@ func (s *storage) GetGaugeMetrics() ([]models.Metrics, error) {
 	return gauge, nil
 }
 
-func (s *storage) GetCounterMetrics() ([]models.Metrics, error) {
+func (s *storage) GetCounterMetrics(ctx context.Context) ([]models.Metrics, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -72,7 +74,7 @@ func (s *storage) GetCounterMetrics() ([]models.Metrics, error) {
 	return counter, nil
 }
 
-func (s *storage) GetAllMetrics() ([]models.Metrics, error) {
+func (s *storage) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -88,7 +90,7 @@ func (s *storage) GetAllMetrics() ([]models.Metrics, error) {
 	return metrics, nil
 }
 
-func (s *storage) GetMetricByID(metric models.Metrics) (models.Metrics, error) {
+func (s *storage) GetMetricByID(ctx context.Context, metric models.Metrics) (models.Metrics, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

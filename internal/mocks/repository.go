@@ -36,63 +36,33 @@ func (m *MockIRepository) EXPECT() *MockIRepositoryMockRecorder {
 }
 
 // GetAllMetrics mocks base method.
-func (m *MockIRepository) GetAllMetrics() ([]models.Metrics, error) {
+func (m *MockIRepository) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllMetrics")
+	ret := m.ctrl.Call(m, "GetAllMetrics", ctx)
 	ret0, _ := ret[0].([]models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllMetrics indicates an expected call of GetAllMetrics.
-func (mr *MockIRepositoryMockRecorder) GetAllMetrics() *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) GetAllMetrics(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIRepository)(nil).GetAllMetrics))
-}
-
-// GetCounterMetrics mocks base method.
-func (m *MockIRepository) GetCounterMetrics() ([]models.Metrics, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCounterMetrics")
-	ret0, _ := ret[0].([]models.Metrics)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetCounterMetrics indicates an expected call of GetCounterMetrics.
-func (mr *MockIRepositoryMockRecorder) GetCounterMetrics() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCounterMetrics", reflect.TypeOf((*MockIRepository)(nil).GetCounterMetrics))
-}
-
-// GetGaugeMetrics mocks base method.
-func (m *MockIRepository) GetGaugeMetrics() ([]models.Metrics, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetGaugeMetrics")
-	ret0, _ := ret[0].([]models.Metrics)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetGaugeMetrics indicates an expected call of GetGaugeMetrics.
-func (mr *MockIRepositoryMockRecorder) GetGaugeMetrics() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGaugeMetrics", reflect.TypeOf((*MockIRepository)(nil).GetGaugeMetrics))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIRepository)(nil).GetAllMetrics), ctx)
 }
 
 // GetMetricByID mocks base method.
-func (m *MockIRepository) GetMetricByID(metric models.Metrics) (models.Metrics, error) {
+func (m *MockIRepository) GetMetricByID(ctx context.Context, metric models.Metrics) (models.Metrics, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetricByID", metric)
+	ret := m.ctrl.Call(m, "GetMetricByID", ctx, metric)
 	ret0, _ := ret[0].(models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetMetricByID indicates an expected call of GetMetricByID.
-func (mr *MockIRepositoryMockRecorder) GetMetricByID(metric interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) GetMetricByID(ctx, metric interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricByID", reflect.TypeOf((*MockIRepository)(nil).GetMetricByID), metric)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricByID", reflect.TypeOf((*MockIRepository)(nil).GetMetricByID), ctx, metric)
 }
 
 // Ping mocks base method.
@@ -110,27 +80,31 @@ func (mr *MockIRepositoryMockRecorder) Ping(ctx interface{}) *gomock.Call {
 }
 
 // SetCounterMetric mocks base method.
-func (m *MockIRepository) SetCounterMetric(metric models.Metrics) {
+func (m *MockIRepository) SetCounterMetric(ctx context.Context, metric models.Metrics) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetCounterMetric", metric)
+	ret := m.ctrl.Call(m, "SetCounterMetric", ctx, metric)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // SetCounterMetric indicates an expected call of SetCounterMetric.
-func (mr *MockIRepositoryMockRecorder) SetCounterMetric(metric interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) SetCounterMetric(ctx, metric interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCounterMetric", reflect.TypeOf((*MockIRepository)(nil).SetCounterMetric), metric)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCounterMetric", reflect.TypeOf((*MockIRepository)(nil).SetCounterMetric), ctx, metric)
 }
 
 // SetGaugeMetric mocks base method.
-func (m *MockIRepository) SetGaugeMetric(metric models.Metrics) {
+func (m *MockIRepository) SetGaugeMetric(ctx context.Context, metric models.Metrics) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetGaugeMetric", metric)
+	ret := m.ctrl.Call(m, "SetGaugeMetric", ctx, metric)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // SetGaugeMetric indicates an expected call of SetGaugeMetric.
-func (mr *MockIRepositoryMockRecorder) SetGaugeMetric(metric interface{}) *gomock.Call {
+func (mr *MockIRepositoryMockRecorder) SetGaugeMetric(ctx, metric interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGaugeMetric", reflect.TypeOf((*MockIRepository)(nil).SetGaugeMetric), metric)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetGaugeMetric", reflect.TypeOf((*MockIRepository)(nil).SetGaugeMetric), ctx, metric)
 }
 
 // MockIFile is a mock of IFile interface.

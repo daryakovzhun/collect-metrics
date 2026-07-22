@@ -43,7 +43,7 @@ func (d *domain) Start(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			if err := d.sendMetrics(); err != nil {
+			if err := d.sendMetrics(ctx); err != nil {
 				logger.Log.Error("failed to send metrics", zap.Error(err))
 				continue
 			}
@@ -51,8 +51,8 @@ func (d *domain) Start(ctx context.Context) error {
 	}
 }
 
-func (d *domain) sendMetrics() error {
-	metrics, err := d.agent.GetAllMetrics()
+func (d *domain) sendMetrics(ctx context.Context) error {
+	metrics, err := d.agent.GetAllMetrics(ctx)
 	if err != nil {
 		return fmt.Errorf("get metrics: %w", err)
 	}
