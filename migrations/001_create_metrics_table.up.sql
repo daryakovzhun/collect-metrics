@@ -5,7 +5,7 @@ CREATE TABLE metrics (
      id BIGSERIAL PRIMARY KEY,
      name VARCHAR(255) NOT NULL,
      type metric_type NOT NULL,
-     delta INT,
+     delta BIGINT,
      value DOUBLE PRECISION,
      hash VARCHAR(64),
      created_at timestamp with time zone DEFAULT NOW(),

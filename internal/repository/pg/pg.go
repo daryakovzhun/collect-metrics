@@ -117,6 +117,9 @@ func (db *database) GetMetricByID(ctx context.Context, metric models.Metrics) (m
 	err := db.pool.QueryRow(ctx, getMetricByID, metric.ID).
 		Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return models.Metrics{}, models.ErrNotFound
+		}
 		return models.Metrics{}, fmt.Errorf("failed to get metric by ID: %w", err)
 	}
 

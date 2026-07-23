@@ -68,8 +68,8 @@ func getServerConfig() (*ServerConfig, error) {
 
 	if cfg.Restore == nil {
 		cfg.Restore = utils.ToPointer(false)
-		flag.BoolVar(cfg.Restore, "r", false, "restore files")
 	}
+	flag.BoolVar(cfg.Restore, "r", *cfg.Restore, "restore metrics")
 
 	if cfg.DB == "" {
 		flag.StringVar(&cfg.DB, "d", "", "database connection string")
