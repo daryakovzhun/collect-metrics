@@ -3,6 +3,7 @@ package httpclient
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
@@ -12,9 +13,8 @@ import (
 )
 
 var (
-	updateCounterEndpoint = "/update/%s/%s/%d"
-	updateGaugeEndpoint   = "/update/%s/%s/%f"
-	updateEndpoint        = "/update"
+	updateEndpoint  = "/update"
+	updatesEndpoint = "/updates/"
 )
 
 type Config struct {
@@ -39,8 +39,8 @@ func New(cfg *Config) client.IClient {
 	return &cl
 }
 
-func (h *httpClient) SendMetric(metric *models.Metrics) error {
-	resp, err := h.sendRequest(metric)
+func (h *httpClient) SendMetric(ctx context.Context, metric *models.Metrics) error {
+	resp, err := h.sendRequest(ctx, updateEndpoint, metric)
 	if err != nil {
 		return fmt.Errorf("request error, err: %w", err)
 	}
@@ -52,20 +52,34 @@ func (h *httpClient) SendMetric(metric *models.Metrics) error {
 	return nil
 }
 
-func (h *httpClient) sendRequest(metrics *models.Metrics) (*http.Response, error) {
-	resURL := h.cfg.URL + updateEndpoint
+func (h *httpClient) SendMetrics(ctx context.Context, metrics []models.Metrics) error {
+	resp, err := h.sendRequest(ctx, updatesEndpoint, metrics)
+	if err != nil {
+		return fmt.Errorf("request error, err: %w", err)
+	}
+	defer resp.Body.Close()
 
-	body, err := json.Marshal(metrics)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("error status code: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+func (h *httpClient) sendRequest(ctx context.Context, endpoint string, body interface{}) (*http.Response, error) {
+	resURL := h.cfg.URL + endpoint
+
+	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return nil, fmt.Errorf("marshal metrics error, err: %w", err)
 	}
 
-	compressBody, err := compress(body)
+	compressBody, err := compress(bodyBytes)
 	if err != nil {
 		return nil, fmt.Errorf("compress metrics error, err: %w", err)
 	}
 
-	req, err := http.NewRequest(http.MethodPost, resURL, compressBody)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, resURL, compressBody)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -97,15 +111,4 @@ func compress(data []byte) (*bytes.Buffer, error) {
 	}
 
 	return &buf, nil
-}
-
-func formURL(url string, metrics *models.Metrics) (string, error) {
-	switch metrics.MType {
-	case models.Counter:
-		return url + fmt.Sprintf(updateCounterEndpoint, metrics.MType, metrics.ID, *metrics.Delta), nil
-	case models.Gauge:
-		return url + fmt.Sprintf(updateGaugeEndpoint, metrics.MType, metrics.ID, *metrics.Value), nil
-	default:
-		return "", fmt.Errorf("unsupported metrics type: %s", metrics.MType)
-	}
 }

@@ -25,8 +25,7 @@ func TestNew_Restore(t *testing.T) {
 	}
 	file.EXPECT().Read().Return(metrics, nil)
 
-	repo.EXPECT().SetGaugeMetric(gomock.Any(), gomock.Any()).Times(1)
-	repo.EXPECT().SetCounterMetric(gomock.Any(), gomock.Any()).Times(1)
+	repo.EXPECT().UpdateMetrics(gomock.Any(), metrics)
 
 	cfg := &Config{
 		StoreInterval: 5, // или >0, если нужно проверить асинхронное сохранение
@@ -92,6 +91,9 @@ func TestNew_NoRestore(t *testing.T) {
 		repo:        repo,
 		fileStorage: file,
 	}
+
+	repo.EXPECT().UpdateMetrics(gomock.Any(), gomock.Any())
+
 	d.restoreMetrics(ctx)
 }
 

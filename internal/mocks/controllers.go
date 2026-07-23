@@ -93,6 +93,20 @@ func (mr *MockIServerControllerMockRecorder) SetMetric(ctx, metric interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMetric", reflect.TypeOf((*MockIServerController)(nil).SetMetric), ctx, metric)
 }
 
+// UpdateMetrics mocks base method.
+func (m *MockIServerController) UpdateMetrics(ctx context.Context, metrics []models.Metrics) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateMetrics", ctx, metrics)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateMetrics indicates an expected call of UpdateMetrics.
+func (mr *MockIServerControllerMockRecorder) UpdateMetrics(ctx, metrics interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetrics", reflect.TypeOf((*MockIServerController)(nil).UpdateMetrics), ctx, metrics)
+}
+
 // MockIAgentController is a mock of IAgentController interface.
 type MockIAgentController struct {
 	ctrl     *gomock.Controller

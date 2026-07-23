@@ -48,11 +48,7 @@ func (d *domain) restoreMetrics(ctx context.Context) {
 		return
 	}
 
-	for _, m := range metrics {
-		if err = d.SetMetric(ctx, &m); err != nil {
-			logger.Log.Error("failed to set metric", zap.Error(err))
-		}
-	}
+	d.UpdateMetrics(ctx, metrics)
 }
 
 func (d *domain) asyncSaveMetrics(ctx context.Context) {
@@ -112,6 +108,14 @@ func (d *domain) SetMetric(ctx context.Context, metric *models.Metrics) error {
 		}
 	}
 
+	return nil
+}
+
+func (d *domain) UpdateMetrics(ctx context.Context, metrics []models.Metrics) error {
+	err := d.repo.UpdateMetrics(ctx, metrics)
+	if err != nil {
+		return fmt.Errorf("failed to update metrics: %w", err)
+	}
 	return nil
 }
 

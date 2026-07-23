@@ -5,6 +5,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
@@ -35,15 +36,29 @@ func (m *MockIClient) EXPECT() *MockIClientMockRecorder {
 }
 
 // SendMetric mocks base method.
-func (m *MockIClient) SendMetric(metric *models.Metrics) error {
+func (m *MockIClient) SendMetric(ctx context.Context, metric *models.Metrics) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SendMetric", metric)
+	ret := m.ctrl.Call(m, "SendMetric", ctx, metric)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // SendMetric indicates an expected call of SendMetric.
-func (mr *MockIClientMockRecorder) SendMetric(metric interface{}) *gomock.Call {
+func (mr *MockIClientMockRecorder) SendMetric(ctx, metric interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMetric", reflect.TypeOf((*MockIClient)(nil).SendMetric), metric)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMetric", reflect.TypeOf((*MockIClient)(nil).SendMetric), ctx, metric)
+}
+
+// SendMetrics mocks base method.
+func (m *MockIClient) SendMetrics(ctx context.Context, metric []models.Metrics) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SendMetrics", ctx, metric)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SendMetrics indicates an expected call of SendMetrics.
+func (mr *MockIClientMockRecorder) SendMetrics(ctx, metric interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendMetrics", reflect.TypeOf((*MockIClient)(nil).SendMetrics), ctx, metric)
 }

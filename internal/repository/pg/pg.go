@@ -18,7 +18,7 @@ type Config struct {
 }
 
 type database struct {
-	pg *pgxpool.Pool
+	pool *pgxpool.Pool
 }
 
 func New(ctx context.Context, cfg *Config) (repository.IRepository, error) {
@@ -40,7 +40,7 @@ func New(ctx context.Context, cfg *Config) (repository.IRepository, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	return &database{pg: pool}, nil
+	return &database{pool: pool}, nil
 }
 
 func startMigrations(db *sql.DB, migrationsDir string) error {
@@ -67,11 +67,11 @@ func startMigrations(db *sql.DB, migrationsDir string) error {
 }
 
 func (db *database) Close() {
-	db.pg.Close()
+	db.pool.Close()
 }
 
 func (db *database) Ping(ctx context.Context) error {
-	err := db.pg.Ping(ctx)
+	err := db.pool.Ping(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to ping database: %w", err)
 	}
@@ -88,7 +88,7 @@ func (db *database) SetCounterMetric(ctx context.Context, metric models.Metrics)
 }
 
 func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
-	rows, err := db.pg.Query(ctx, `SELECT name, type, delta, value, hash FROM metrics`)
+	rows, err := db.pool.Query(ctx, getAllMetrics)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query get all metrics: %w", err)
 	}
@@ -114,7 +114,7 @@ func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
 
 func (db *database) GetMetricByID(ctx context.Context, metric models.Metrics) (models.Metrics, error) {
 	m := models.Metrics{}
-	err := db.pg.QueryRow(ctx, `SELECT name, type, delta, value, hash FROM metrics where name = $1`, metric.ID).
+	err := db.pool.QueryRow(ctx, getMetricByID, metric.ID).
 		Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 	if err != nil {
 		return models.Metrics{}, fmt.Errorf("failed to get metric by ID: %w", err)
@@ -124,19 +124,35 @@ func (db *database) GetMetricByID(ctx context.Context, metric models.Metrics) (m
 }
 
 func (db *database) updateMetric(ctx context.Context, metric *models.Metrics) error {
-	_, err := db.pg.Exec(ctx, `
-        INSERT INTO metrics (name, type, delta, value) 
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (name) 
-        DO UPDATE SET
-            type  = EXCLUDED.type,
-            delta = EXCLUDED.delta,
-            value = EXCLUDED.value,
-            updated_at = NOW()`,
-		metric.ID, metric.MType, metric.Delta, metric.Value)
+	_, err := db.pool.Exec(ctx, updateMetricsQuery,
+		metric.ID, metric.MType, metric.Delta, metric.Value, metric.Hash)
 
 	if err != nil {
 		return fmt.Errorf("failed to update %s metric: %w", metric.MType, err)
+	}
+
+	return nil
+}
+
+func (db *database) UpdateMetrics(ctx context.Context, metrics []models.Metrics) error {
+	tx, err := db.pool.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to begin tx, err: %w", err)
+	}
+
+	defer tx.Rollback(ctx)
+
+	for _, metric := range metrics {
+		_, err = tx.Exec(ctx, updateMetricsQuery, metric.ID, metric.MType,
+			metric.Delta, metric.Value, metric.Hash)
+		if err != nil {
+			return fmt.Errorf("failed to update metric: %w", err)
+		}
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to commit tx, err: %w", err)
 	}
 
 	return nil
