@@ -10,6 +10,7 @@ type AgentConfig struct {
 	ServerAddress  string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
+	Key            string `env:"KEY"`
 }
 
 type ServerConfig struct {
@@ -18,6 +19,7 @@ type ServerConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool  `env:"RESTORE"`
 	DB              string `env:"DATABASE_DSN"`
+	Key             string `env:"KEY"`
 }
 
 func getAgentConfig() (*AgentConfig, error) {
@@ -38,6 +40,10 @@ func getAgentConfig() (*AgentConfig, error) {
 
 	if cfg.PollInterval == 0 {
 		flag.IntVar(&cfg.PollInterval, "p", 2, "the frequency of polling metrics from the package")
+	}
+
+	if cfg.Key == "" {
+		flag.StringVar(&cfg.Key, "k", "", "the key to use for encryption")
 	}
 
 	flag.Parse()
@@ -73,6 +79,10 @@ func getServerConfig() (*ServerConfig, error) {
 
 	if cfg.DB == "" {
 		flag.StringVar(&cfg.DB, "d", "", "database connection string")
+	}
+
+	if cfg.Key == "" {
+		flag.StringVar(&cfg.Key, "k", "", "the key to use for encryption")
 	}
 
 	flag.Parse()

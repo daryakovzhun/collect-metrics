@@ -53,7 +53,7 @@ func Run(ctx context.Context) error {
 		StoreInterval: time.Duration(utils.FromPointer(cfg.StoreInterval)) * time.Second,
 		Restore:       utils.FromPointer(cfg.Restore),
 	}, storage, fileStorage)
-	h := handler.New(domain)
+	h := handler.New(&handler.Config{Key: cfg.Key}, domain)
 	router := router.New(h)
 
 	server := &http.Server{
@@ -92,6 +92,7 @@ func RunAgent(ctx context.Context) error {
 	cl := httpclient.New(&httpclient.Config{
 		Timeout: 2 * time.Second,
 		URL:     "http://" + cfg.ServerAddress,
+		Key:     cfg.Key,
 	})
 
 	domain := agent.New(&agent.Config{ReportInterval: time.Duration(cfg.ReportInterval) * time.Second}, ag, cl)
