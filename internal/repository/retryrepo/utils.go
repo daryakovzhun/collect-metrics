@@ -11,15 +11,14 @@ import (
 )
 
 var (
-	delays     = []time.Duration{1, 3, 5}
-	maxRetries = 3
+	delays = []time.Duration{1, 3, 5}
 )
 
 type retryableFunc func() error
 
 func retry(ctx context.Context, fn retryableFunc) error {
 	var lastErr error
-	for attempt := 0; attempt <= maxRetries; attempt++ {
+	for attempt := 0; attempt < len(delays); attempt++ {
 		// Проверяем отмену контекста перед каждой попыткой
 		if ctx.Err() != nil {
 			return ctx.Err()
