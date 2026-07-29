@@ -1,6 +1,7 @@
 package localcache
 
 import (
+	"context"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"testing"
 
@@ -27,11 +28,11 @@ func TestStorage_SetGaugeMetric(t *testing.T) {
 		Value: utils.ToPointer(67.89),
 	}
 
-	repo.SetGaugeMetric(metric1)
-	repo.SetGaugeMetric(metric2)
+	repo.SetGaugeMetric(context.Background(), metric1)
+	repo.SetGaugeMetric(context.Background(), metric2)
 
 	// Проверяем, что обе метрики сохранены
-	gauges, err := repo.GetGaugeMetrics()
+	gauges, err := repo.GetGaugeMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, gauges, 2)
 
@@ -49,9 +50,9 @@ func TestStorage_SetGaugeMetric(t *testing.T) {
 	// Перезаписываем существующую метрику
 	newValue := 999.99
 	metric1.Value = utils.ToPointer(newValue)
-	repo.SetGaugeMetric(metric1)
+	repo.SetGaugeMetric(context.Background(), metric1)
 
-	gauges, err = repo.GetGaugeMetrics()
+	gauges, err = repo.GetGaugeMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, gauges, 2)
 
@@ -75,18 +76,18 @@ func TestStorage_SetCounterMetric(t *testing.T) {
 		Delta: utils.ToPointer(int64(10)),
 	}
 
-	repo.SetCounterMetric(metric)
+	repo.SetCounterMetric(context.Background(), metric)
 
 	// Проверяем через GetMetricByID
-	retrieved, err := repo.GetMetricByID(metric)
+	retrieved, err := repo.GetMetricByID(context.Background(), metric)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(10), *retrieved.Delta)
 
 	// Добавляем ещё 5, должно стать 15
 	metric.Delta = utils.ToPointer(int64(5))
-	repo.SetCounterMetric(metric)
+	repo.SetCounterMetric(context.Background(), metric)
 
-	retrieved, err = repo.GetMetricByID(metric)
+	retrieved, err = repo.GetMetricByID(context.Background(), metric)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(15), *retrieved.Delta)
 
@@ -96,9 +97,9 @@ func TestStorage_SetCounterMetric(t *testing.T) {
 		MType: models.Counter,
 		Delta: utils.ToPointer(int64(7)),
 	}
-	repo.SetCounterMetric(metric2)
+	repo.SetCounterMetric(context.Background(), metric2)
 
-	counters, err := repo.GetCounterMetrics()
+	counters, err := repo.GetCounterMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, counters, 2)
 
@@ -117,17 +118,17 @@ func TestStorage_GetGaugeMetrics(t *testing.T) {
 	repo := New().(*storage)
 
 	// Пустой список
-	gauges, err := repo.GetGaugeMetrics()
+	gauges, err := repo.GetGaugeMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Empty(t, gauges)
 
 	// Добавляем метрики
 	metric1 := models.Metrics{ID: "g1", MType: models.Gauge, Value: utils.ToPointer(1.1)}
 	metric2 := models.Metrics{ID: "g2", MType: models.Gauge, Value: utils.ToPointer(2.2)}
-	repo.SetGaugeMetric(metric1)
-	repo.SetGaugeMetric(metric2)
+	repo.SetGaugeMetric(context.Background(), metric1)
+	repo.SetGaugeMetric(context.Background(), metric2)
 
-	gauges, err = repo.GetGaugeMetrics()
+	gauges, err = repo.GetGaugeMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, gauges, 2)
 
@@ -144,17 +145,17 @@ func TestStorage_GetCounterMetrics(t *testing.T) {
 	repo := New().(*storage)
 
 	// Пустой список
-	counters, err := repo.GetCounterMetrics()
+	counters, err := repo.GetCounterMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Empty(t, counters)
 
 	// Добавляем метрики
 	metric1 := models.Metrics{ID: "c1", MType: models.Counter, Delta: utils.ToPointer(int64(10))}
 	metric2 := models.Metrics{ID: "c2", MType: models.Counter, Delta: utils.ToPointer(int64(20))}
-	repo.SetCounterMetric(metric1)
-	repo.SetCounterMetric(metric2)
+	repo.SetCounterMetric(context.Background(), metric1)
+	repo.SetCounterMetric(context.Background(), metric2)
 
-	counters, err = repo.GetCounterMetrics()
+	counters, err = repo.GetCounterMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, counters, 2)
 
@@ -170,7 +171,7 @@ func TestStorage_GetAllMetrics(t *testing.T) {
 	repo := New().(*storage)
 
 	// Пустой список
-	all, err := repo.GetAllMetrics()
+	all, err := repo.GetAllMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Empty(t, all)
 
@@ -180,12 +181,12 @@ func TestStorage_GetAllMetrics(t *testing.T) {
 	c1 := models.Metrics{ID: "c1", MType: models.Counter, Delta: utils.ToPointer(int64(10))}
 	c2 := models.Metrics{ID: "c2", MType: models.Counter, Delta: utils.ToPointer(int64(20))}
 
-	repo.SetGaugeMetric(g1)
-	repo.SetGaugeMetric(g2)
-	repo.SetCounterMetric(c1)
-	repo.SetCounterMetric(c2)
+	repo.SetGaugeMetric(context.Background(), g1)
+	repo.SetGaugeMetric(context.Background(), g2)
+	repo.SetCounterMetric(context.Background(), c1)
+	repo.SetCounterMetric(context.Background(), c2)
 
-	all, err = repo.GetAllMetrics()
+	all, err = repo.GetAllMetrics(context.Background())
 	assert.NoError(t, err)
 	assert.Len(t, all, 4)
 
@@ -224,38 +225,38 @@ func TestStorage_GetMetricByID(t *testing.T) {
 	// Добавляем метрики
 	gauge := models.Metrics{ID: "gauge1", MType: models.Gauge, Value: utils.ToPointer(3.14)}
 	counter := models.Metrics{ID: "counter1", MType: models.Counter, Delta: utils.ToPointer(int64(42))}
-	repo.SetGaugeMetric(gauge)
-	repo.SetCounterMetric(counter)
+	repo.SetGaugeMetric(context.Background(), gauge)
+	repo.SetCounterMetric(context.Background(), counter)
 
 	// Успешный поиск gauge
-	retrieved, err := repo.GetMetricByID(models.Metrics{ID: "gauge1", MType: models.Gauge})
+	retrieved, err := repo.GetMetricByID(context.Background(), models.Metrics{ID: "gauge1", MType: models.Gauge})
 	assert.NoError(t, err)
 	assert.Equal(t, gauge.ID, retrieved.ID)
 	assert.Equal(t, gauge.MType, retrieved.MType)
 	assert.Equal(t, *gauge.Value, *retrieved.Value)
 
 	// Успешный поиск counter
-	retrieved, err = repo.GetMetricByID(models.Metrics{ID: "counter1", MType: models.Counter})
+	retrieved, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "counter1", MType: models.Counter})
 	assert.NoError(t, err)
 	assert.Equal(t, counter.ID, retrieved.ID)
 	assert.Equal(t, counter.MType, retrieved.MType)
 	assert.Equal(t, *counter.Delta, *retrieved.Delta)
 
 	// Несуществующий ID
-	_, err = repo.GetMetricByID(models.Metrics{ID: "unknown", MType: models.Gauge})
+	_, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "unknown", MType: models.Gauge})
 	assert.ErrorIs(t, err, models.ErrNotFound)
 
-	_, err = repo.GetMetricByID(models.Metrics{ID: "unknown", MType: models.Counter})
+	_, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "unknown", MType: models.Counter})
 	assert.ErrorIs(t, err, models.ErrNotFound)
 
 	// Неизвестный тип
-	_, err = repo.GetMetricByID(models.Metrics{ID: "anything", MType: "unknown_type"})
+	_, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "anything", MType: "unknown_type"})
 	assert.ErrorIs(t, err, models.ErrUnknownMetricType)
 
 	// Существующий ID, но неправильный тип (например, gauge ищем как counter)
-	_, err = repo.GetMetricByID(models.Metrics{ID: "gauge1", MType: models.Counter})
+	_, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "gauge1", MType: models.Counter})
 	assert.ErrorIs(t, err, models.ErrNotFound)
 
-	_, err = repo.GetMetricByID(models.Metrics{ID: "counter1", MType: models.Gauge})
+	_, err = repo.GetMetricByID(context.Background(), models.Metrics{ID: "counter1", MType: models.Gauge})
 	assert.ErrorIs(t, err, models.ErrNotFound)
 }

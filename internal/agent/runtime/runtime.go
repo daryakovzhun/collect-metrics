@@ -39,46 +39,46 @@ func (a *rtAgent) Collect(ctx context.Context) {
 			case <-ticker.C:
 				var memStats runtime.MemStats
 				runtime.ReadMemStats(&memStats)
-				a.collectGaugeMetrics(memStats)
-				a.collectCounterMetrics()
+				a.collectGaugeMetrics(ctx, memStats)
+				a.collectCounterMetrics(ctx)
 			}
 		}
 	}()
 }
 
-func (a *rtAgent) collectGaugeMetrics(memStats runtime.MemStats) {
-	a.SetGaugeMetric(toGaugeMetric(Alloc, float64(memStats.Alloc)))
-	a.SetGaugeMetric(toGaugeMetric(BuckHashSys, float64(memStats.BuckHashSys)))
-	a.SetGaugeMetric(toGaugeMetric(Frees, float64(memStats.Frees)))
-	a.SetGaugeMetric(toGaugeMetric(GCCPUFraction, memStats.GCCPUFraction))
-	a.SetGaugeMetric(toGaugeMetric(GCSys, float64(memStats.GCSys)))
-	a.SetGaugeMetric(toGaugeMetric(HeapAlloc, float64(memStats.HeapAlloc)))
-	a.SetGaugeMetric(toGaugeMetric(HeapIdle, float64(memStats.HeapIdle)))
-	a.SetGaugeMetric(toGaugeMetric(HeapInuse, float64(memStats.HeapInuse)))
-	a.SetGaugeMetric(toGaugeMetric(HeapObjects, float64(memStats.HeapObjects)))
-	a.SetGaugeMetric(toGaugeMetric(HeapReleased, float64(memStats.HeapReleased)))
-	a.SetGaugeMetric(toGaugeMetric(HeapSys, float64(memStats.HeapSys)))
-	a.SetGaugeMetric(toGaugeMetric(LastGC, float64(memStats.LastGC)))
-	a.SetGaugeMetric(toGaugeMetric(Lookups, float64(memStats.Lookups)))
-	a.SetGaugeMetric(toGaugeMetric(MCacheInuse, float64(memStats.MCacheInuse)))
-	a.SetGaugeMetric(toGaugeMetric(MCacheSys, float64(memStats.MCacheSys)))
-	a.SetGaugeMetric(toGaugeMetric(MSpanInuse, float64(memStats.MSpanInuse)))
-	a.SetGaugeMetric(toGaugeMetric(MSpanSys, float64(memStats.MSpanSys)))
-	a.SetGaugeMetric(toGaugeMetric(Mallocs, float64(memStats.Mallocs)))
-	a.SetGaugeMetric(toGaugeMetric(NextGC, float64(memStats.NextGC)))
-	a.SetGaugeMetric(toGaugeMetric(NumForcedGC, float64(memStats.NumForcedGC)))
-	a.SetGaugeMetric(toGaugeMetric(NumGC, float64(memStats.NumGC)))
-	a.SetGaugeMetric(toGaugeMetric(OtherSys, float64(memStats.OtherSys)))
-	a.SetGaugeMetric(toGaugeMetric(PauseTotalNs, float64(memStats.PauseTotalNs)))
-	a.SetGaugeMetric(toGaugeMetric(StackInuse, float64(memStats.StackInuse)))
-	a.SetGaugeMetric(toGaugeMetric(StackSys, float64(memStats.StackSys)))
-	a.SetGaugeMetric(toGaugeMetric(Sys, float64(memStats.Sys)))
-	a.SetGaugeMetric(toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
-	a.SetGaugeMetric(toGaugeMetric(RandomValue, rand.Float64()))
+func (a *rtAgent) collectGaugeMetrics(ctx context.Context, memStats runtime.MemStats) {
+	a.SetGaugeMetric(ctx, toGaugeMetric(Alloc, float64(memStats.Alloc)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(BuckHashSys, float64(memStats.BuckHashSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(Frees, float64(memStats.Frees)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(GCCPUFraction, memStats.GCCPUFraction))
+	a.SetGaugeMetric(ctx, toGaugeMetric(GCSys, float64(memStats.GCSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapAlloc, float64(memStats.HeapAlloc)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapIdle, float64(memStats.HeapIdle)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapInuse, float64(memStats.HeapInuse)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapObjects, float64(memStats.HeapObjects)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapReleased, float64(memStats.HeapReleased)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(HeapSys, float64(memStats.HeapSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(LastGC, float64(memStats.LastGC)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(Lookups, float64(memStats.Lookups)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(MCacheInuse, float64(memStats.MCacheInuse)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(MCacheSys, float64(memStats.MCacheSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(MSpanInuse, float64(memStats.MSpanInuse)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(MSpanSys, float64(memStats.MSpanSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(Mallocs, float64(memStats.Mallocs)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(NextGC, float64(memStats.NextGC)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(NumForcedGC, float64(memStats.NumForcedGC)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(NumGC, float64(memStats.NumGC)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(OtherSys, float64(memStats.OtherSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(PauseTotalNs, float64(memStats.PauseTotalNs)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(StackInuse, float64(memStats.StackInuse)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(StackSys, float64(memStats.StackSys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(Sys, float64(memStats.Sys)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(RandomValue, rand.Float64()))
 }
 
-func (a *rtAgent) collectCounterMetrics() {
-	a.SetCounterMetric(toCounterMetric(PollCount, 1))
+func (a *rtAgent) collectCounterMetrics(ctx context.Context) {
+	a.SetCounterMetric(ctx, toCounterMetric(PollCount, 1))
 }
 
 func toGaugeMetric(name string, value float64) models.Metrics {

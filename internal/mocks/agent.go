@@ -48,16 +48,16 @@ func (mr *MockIAgentMockRecorder) Collect(ctx interface{}) *gomock.Call {
 }
 
 // GetAllMetrics mocks base method.
-func (m *MockIAgent) GetAllMetrics() ([]models.Metrics, error) {
+func (m *MockIAgent) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAllMetrics")
+	ret := m.ctrl.Call(m, "GetAllMetrics", ctx)
 	ret0, _ := ret[0].([]models.Metrics)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetAllMetrics indicates an expected call of GetAllMetrics.
-func (mr *MockIAgentMockRecorder) GetAllMetrics() *gomock.Call {
+func (mr *MockIAgentMockRecorder) GetAllMetrics(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIAgent)(nil).GetAllMetrics))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetrics", reflect.TypeOf((*MockIAgent)(nil).GetAllMetrics), ctx)
 }

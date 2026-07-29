@@ -9,5 +9,5 @@ import (
 
 type IAgent interface {
 	Collect(ctx context.Context)
-	GetAllMetrics() ([]models.Metrics, error)
+	GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
 }
