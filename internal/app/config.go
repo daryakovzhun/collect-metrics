@@ -17,6 +17,7 @@ type ServerConfig struct {
 	StoreInterval   *int   `env:"STORE_INTERVAL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool  `env:"RESTORE"`
+	DB              string `env:"DATABASE_DSN"`
 }
 
 func getAgentConfig() (*AgentConfig, error) {
@@ -68,6 +69,10 @@ func getServerConfig() (*ServerConfig, error) {
 	if cfg.Restore == nil {
 		cfg.Restore = utils.ToPointer(false)
 		flag.BoolVar(cfg.Restore, "r", false, "restore files")
+	}
+
+	if cfg.DB == "" {
+		flag.StringVar(&cfg.DB, "d", "", "database connection string")
 	}
 
 	flag.Parse()

@@ -10,6 +10,7 @@ import (
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/filestore"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/localcache"
+	"github.com/daryakovzhun/collect-metrics/internal/repository/pg"
 	"github.com/daryakovzhun/collect-metrics/internal/router"
 	"github.com/daryakovzhun/collect-metrics/internal/service/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/service/server"
@@ -35,11 +36,15 @@ func Run(ctx context.Context) error {
 
 	storage := localcache.New()
 	fileStorage := filestore.New(&filestore.Config{Path: cfg.FileStoragePath})
+	dbStorage, err := pg.New(ctx, &pg.Config{DatabaseDNS: cfg.DB})
+	if err != nil {
+		return fmt.Errorf("failed to connect database, err: %w", err)
+	}
 
 	domain := server.New(egCtx, &server.Config{
 		StoreInterval: time.Duration(utils.FromPointer(cfg.StoreInterval)) * time.Second,
 		Restore:       utils.FromPointer(cfg.Restore),
-	}, storage, fileStorage)
+	}, storage, dbStorage, fileStorage)
 	h := handler.New(domain)
 	router := router.New(h)
 

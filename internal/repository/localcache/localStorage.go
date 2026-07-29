@@ -1,6 +1,7 @@
 package localcache
 
 import (
+	"context"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/daryakovzhun/collect-metrics/internal/repository"
 	"github.com/daryakovzhun/collect-metrics/internal/utils"
@@ -18,6 +19,10 @@ func New() repository.IRepository {
 		gauge:   make(map[string]models.Metrics),
 		counter: make(map[string]models.Metrics),
 	}
+}
+
+func (s *storage) Ping(ctx context.Context) error {
+	return nil
 }
 
 func (s *storage) SetGaugeMetric(metric models.Metrics) {
