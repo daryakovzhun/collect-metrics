@@ -92,7 +92,7 @@ func (db *database) SetCounterMetric(ctx context.Context, metric models.Metrics)
 func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, error) {
 	rows, err := db.pool.Query(ctx, getAllMetrics)
 	if err != nil {
-		return nil, handleError("failed to query get all metrics: %w", err)
+		return nil, handleError("failed to query get all metrics", err)
 	}
 	defer rows.Close()
 
@@ -101,14 +101,14 @@ func (db *database) GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
 		m := models.Metrics{}
 		err = rows.Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 		if err != nil {
-			return nil, handleError("failed to scan metric row: %w", err)
+			return nil, handleError("failed to scan metric row", err)
 		}
 
 		metrics = append(metrics, m)
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, handleError("failed to scan metric rows: %w", err)
+		return nil, handleError("failed to scan metric rows", err)
 	}
 
 	return metrics, nil
@@ -119,7 +119,7 @@ func (db *database) GetMetricByID(ctx context.Context, metric models.Metrics) (m
 	err := db.pool.QueryRow(ctx, getMetricByID, metric.ID).
 		Scan(&m.ID, &m.MType, &m.Delta, &m.Value, &m.Hash)
 	if err != nil {
-		return models.Metrics{}, handleError("failed to get metric by ID: %w", err)
+		return models.Metrics{}, handleError("failed to get metric by ID", err)
 	}
 
 	return m, nil
@@ -130,7 +130,7 @@ func (db *database) updateMetric(ctx context.Context, metric *models.Metrics) er
 		metric.ID, metric.MType, metric.Delta, metric.Value, metric.Hash)
 
 	if err != nil {
-		return handleError("failed to update metric: %w", err)
+		return handleError("failed to update metric", err)
 	}
 
 	return nil
@@ -139,7 +139,7 @@ func (db *database) updateMetric(ctx context.Context, metric *models.Metrics) er
 func (db *database) UpdateMetrics(ctx context.Context, metrics []models.Metrics) error {
 	tx, err := db.pool.Begin(ctx)
 	if err != nil {
-		return handleError("failed to begin tx, err: %w", err)
+		return handleError("failed to begin tx", err)
 	}
 
 	defer tx.Rollback(ctx)
@@ -148,27 +148,27 @@ func (db *database) UpdateMetrics(ctx context.Context, metrics []models.Metrics)
 		_, err = tx.Exec(ctx, updateMetricsQuery, metric.ID, metric.MType,
 			metric.Delta, metric.Value, metric.Hash)
 		if err != nil {
-			return handleError("failed to update metric: %w", err)
+			return handleError("failed to update metric", err)
 		}
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return handleError("failed to commit tx, err: %w", err)
+		return handleError("failed to commit tx", err)
 	}
 
 	return nil
 }
 
-func handleError(format string, err error) error {
+func handleError(msg string, err error) error {
 	if errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf(format, models.ErrNotFound)
+		return fmt.Errorf("msg: %s, err: %w", msg, models.ErrNotFound)
 	}
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgerrcode.IsConnectionException(pgErr.Code) {
-		return fmt.Errorf("%s %w, err: %w", format, models.ErrConnection, err)
+		return fmt.Errorf("msg: %s, %w, err: %w", msg, models.ErrConnection, err)
 	}
 
-	return fmt.Errorf("%s, err: %w", format, err)
+	return fmt.Errorf("msg: %s, err: %w", msg, err)
 }
