@@ -12,6 +12,7 @@ import (
 	"github.com/daryakovzhun/collect-metrics/internal/repository/filestore"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/localcache"
 	"github.com/daryakovzhun/collect-metrics/internal/repository/pg"
+	retryrepository "github.com/daryakovzhun/collect-metrics/internal/repository/retryrepo"
 	"github.com/daryakovzhun/collect-metrics/internal/router"
 	"github.com/daryakovzhun/collect-metrics/internal/service/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/service/server"
@@ -41,6 +42,7 @@ func Run(ctx context.Context) error {
 		if err != nil {
 			return fmt.Errorf("failed to connect database, err: %w", err)
 		}
+		storage = retryrepository.New(storage)
 	} else {
 		storage = localcache.New()
 	}

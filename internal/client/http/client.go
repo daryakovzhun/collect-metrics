@@ -5,16 +5,24 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
+	"go.uber.org/zap"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 )
 
 var (
 	updateEndpoint  = "/update"
 	updatesEndpoint = "/updates/"
+
+	delays       = []time.Duration{1, 3, 5}
+	countRetries = 3
 )
 
 type Config struct {
@@ -40,7 +48,7 @@ func New(cfg *Config) client.IClient {
 }
 
 func (h *httpClient) SendMetric(ctx context.Context, metric *models.Metrics) error {
-	resp, err := h.sendRequest(ctx, updateEndpoint, metric)
+	resp, err := h.sendRequestWithRetries(ctx, updateEndpoint, metric)
 	if err != nil {
 		return fmt.Errorf("request error, err: %w", err)
 	}
@@ -53,7 +61,7 @@ func (h *httpClient) SendMetric(ctx context.Context, metric *models.Metrics) err
 }
 
 func (h *httpClient) SendMetrics(ctx context.Context, metrics []models.Metrics) error {
-	resp, err := h.sendRequest(ctx, updatesEndpoint, metrics)
+	resp, err := h.sendRequestWithRetries(ctx, updatesEndpoint, metrics)
 	if err != nil {
 		return fmt.Errorf("request error, err: %w", err)
 	}
@@ -64,6 +72,30 @@ func (h *httpClient) SendMetrics(ctx context.Context, metrics []models.Metrics) 
 	}
 
 	return nil
+}
+
+func (h *httpClient) sendRequestWithRetries(ctx context.Context, endpoint string, body interface{}) (*http.Response, error) {
+	var lastErr error
+
+	for i := 0; i < countRetries; i++ {
+		resp, err := h.sendRequest(ctx, endpoint, body)
+		if err == nil {
+			return resp, nil
+		}
+
+		lastErr = err
+		if isConnectionError(lastErr) {
+			logger.Log.Error("failed send request",
+				zap.Int("attempt", i+1), zap.Error(lastErr),
+				zap.String("endpoint", endpoint))
+			time.Sleep(delays[i] * time.Second)
+			continue
+		}
+
+		break
+	}
+
+	return nil, lastErr
 }
 
 func (h *httpClient) sendRequest(ctx context.Context, endpoint string, body interface{}) (*http.Response, error) {
@@ -111,4 +143,26 @@ func compress(data []byte) (*bytes.Buffer, error) {
 	}
 
 	return &buf, nil
+}
+
+func isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		err = urlErr.Err
+	}
+
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		return true
+	}
+
+	if errors.Is(err, net.ErrClosed) {
+		return true
+	}
+
+	return false
 }

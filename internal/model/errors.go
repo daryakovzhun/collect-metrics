@@ -7,4 +7,5 @@ var (
 	ErrEmptyMetricName   = errors.New("empty metric name")
 	ErrNotFound          = errors.New("recourse not found")
 	ErrValueNotSet       = errors.New("value not set")
+	ErrConnection        = errors.New("connection error")
 )
