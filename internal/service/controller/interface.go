@@ -16,5 +16,5 @@ type IServerController interface {
 }
 
 type IAgentController interface {
-	Start(ctx context.Context) error
+	Start(ctx context.Context)
 }

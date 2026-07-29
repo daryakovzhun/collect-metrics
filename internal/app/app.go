@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"net/http"
+	"sync"
 
 	"time"
 )
@@ -82,20 +83,46 @@ func Run(ctx context.Context) error {
 }
 
 func RunAgent(ctx context.Context) error {
+	if err := logger.Initialize(zap.DebugLevel.String()); err != nil {
+		return err
+	}
+
 	cfg, err := getAgentConfig()
 	if err != nil {
 		return fmt.Errorf("get agent config: %w", err)
 	}
 
 	storage := localcache.New()
-	ag := runtime.New(&runtime.Config{PollInterval: time.Duration(cfg.PollInterval) * time.Second}, storage)
+	ag := runtime.New(&runtime.Config{
+		PollInterval: time.Duration(cfg.PollInterval) * time.Second,
+	}, storage)
+
 	cl := httpclient.New(&httpclient.Config{
 		Timeout: 2 * time.Second,
 		URL:     "http://" + cfg.ServerAddress,
 		Key:     cfg.Key,
 	})
 
-	domain := agent.New(&agent.Config{ReportInterval: time.Duration(cfg.ReportInterval) * time.Second}, ag, cl)
+	domain := agent.New(&agent.Config{
+		ReportInterval: time.Duration(cfg.ReportInterval) * time.Second,
+		RateLimit:      cfg.RateLimit,
+	}, ag, cl)
 
-	return domain.Start(ctx)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	wg.Go(func() {
+		defer wg.Done()
+		domain.Start(ctx)
+	})
+
+	wg.Add(1)
+	wg.Go(func() {
+		defer wg.Done()
+		ag.Collect(ctx)
+	})
+
+	wg.Wait()
+
+	return nil
 }

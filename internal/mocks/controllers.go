@@ -131,11 +131,9 @@ func (m *MockIAgentController) EXPECT() *MockIAgentControllerMockRecorder {
 }
 
 // Start mocks base method.
-func (m *MockIAgentController) Start(ctx context.Context) error {
+func (m *MockIAgentController) Start(ctx context.Context) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Start", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Start", ctx)
 }
 
 // Start indicates an expected call of Start.

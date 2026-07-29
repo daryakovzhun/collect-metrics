@@ -11,6 +11,7 @@ type AgentConfig struct {
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
 	Key            string `env:"KEY"`
+	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
 type ServerConfig struct {
@@ -29,6 +30,7 @@ func getAgentConfig() (*AgentConfig, error) {
 	reportInterval := flag.Int("r", 10, "frequency of sending metrics to the server")
 	pollInterval := flag.Int("p", 2, "the frequency of polling metrics from the package")
 	key := flag.String("k", "", "the key to use for encryption")
+	rateLimit := flag.Int("l", 1, "the rate limiter requests to server")
 
 	flag.Parse()
 
@@ -47,6 +49,10 @@ func getAgentConfig() (*AgentConfig, error) {
 	}
 	if cfg.Key == "" {
 		cfg.Key = *key
+	}
+
+	if cfg.RateLimit == 0 {
+		cfg.RateLimit = *rateLimit
 	}
 
 	return &cfg, nil

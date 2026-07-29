@@ -2,10 +2,15 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/agent"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/daryakovzhun/collect-metrics/internal/repository"
 	"github.com/daryakovzhun/collect-metrics/internal/utils"
+	"github.com/shirou/gopsutil/cpu"
+	"github.com/shirou/gopsutil/mem"
+	"go.uber.org/zap"
 	"math/rand/v2"
 	"runtime"
 	"time"
@@ -41,6 +46,10 @@ func (a *rtAgent) Collect(ctx context.Context) {
 				runtime.ReadMemStats(&memStats)
 				a.collectGaugeMetrics(ctx, memStats)
 				a.collectCounterMetrics(ctx)
+				err := a.collectSystemMetrics(ctx)
+				if err != nil {
+					logger.Log.Error("collect system metrics failed", zap.Error(err))
+				}
 			}
 		}
 	}()
@@ -75,6 +84,29 @@ func (a *rtAgent) collectGaugeMetrics(ctx context.Context, memStats runtime.MemS
 	a.SetGaugeMetric(ctx, toGaugeMetric(Sys, float64(memStats.Sys)))
 	a.SetGaugeMetric(ctx, toGaugeMetric(TotalAlloc, float64(memStats.TotalAlloc)))
 	a.SetGaugeMetric(ctx, toGaugeMetric(RandomValue, rand.Float64()))
+}
+
+func (a *rtAgent) collectSystemMetrics(ctx context.Context) error {
+	vMem, err := mem.VirtualMemory()
+	if err != nil {
+		return fmt.Errorf("failed to get virtual memory: %w", err)
+	}
+
+	cpuPercents, err := cpu.Percent(0, false)
+	if err != nil {
+		return fmt.Errorf("failed to get cpu data: %w", err)
+	}
+
+	var cpuUtil float64
+	if len(cpuPercents) > 0 {
+		cpuUtil = cpuPercents[0]
+	}
+
+	a.SetGaugeMetric(ctx, toGaugeMetric(TotalMemory, float64(vMem.Total)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(FreeMemory, float64(vMem.Free)))
+	a.SetGaugeMetric(ctx, toGaugeMetric(CPUutilization1, cpuUtil))
+
+	return nil
 }
 
 func (a *rtAgent) collectCounterMetrics(ctx context.Context) {
