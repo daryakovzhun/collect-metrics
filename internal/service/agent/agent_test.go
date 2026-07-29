@@ -125,7 +125,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 					{ID: "c1", Delta: toPtrInt64(10)},
 				}, nil).Times(1)
 
-				clientMock.EXPECT().SendMetric(gomock.Any()).Times(3).Return(nil)
+				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(nil)
 			},
 			wantErr: false,
 		},
@@ -135,7 +135,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "g1", Value: toPtrFloat64(1.1)},
 				}, nil).Times(1)
-				clientMock.EXPECT().SendMetric(gomock.Any()).Return(errors.New("gauge send error")).Times(1)
+				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(errors.New("gauge send error")).Times(1)
 				// GetCounterMetrics не должен вызываться
 			},
 			wantErr: true,
@@ -146,7 +146,7 @@ func TestDomain_sendMetrics(t *testing.T) {
 				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
 					{ID: "c1", Delta: toPtrInt64(5)},
 				}, nil).Times(1)
-				clientMock.EXPECT().SendMetric(gomock.Any()).Return(errors.New("counter send error")).Times(1)
+				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(errors.New("counter send error")).Times(1)
 			},
 			wantErr: true,
 		},
@@ -171,76 +171,6 @@ func TestDomain_sendMetrics(t *testing.T) {
 			err := d.sendMetrics(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("sendMetrics() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestDomain_sendListMetrics(t *testing.T) {
-	type fields struct {
-		client client.IClient
-	}
-	type args struct {
-		metrics []models.Metrics
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		setup   func(clientMock *mocks.MockIClient)
-		wantErr bool
-	}{
-		{
-			name: "empty list",
-			args: args{metrics: []models.Metrics{}},
-			setup: func(clientMock *mocks.MockIClient) {
-				// никаких вызовов не ожидается
-			},
-			wantErr: false,
-		},
-		{
-			name: "successful send all",
-			args: args{metrics: []models.Metrics{
-				{ID: "m1", Value: toPtrFloat64(1.0)},
-				{ID: "m2", Delta: toPtrInt64(2)},
-			}},
-			setup: func(clientMock *mocks.MockIClient) {
-				clientMock.EXPECT().SendMetric(gomock.Any()).Return(nil).Times(2)
-			},
-			wantErr: false,
-		},
-		{
-			name: "error on second metric",
-			args: args{metrics: []models.Metrics{
-				{ID: "m1", Value: toPtrFloat64(1.0)},
-				{ID: "m2", Delta: toPtrInt64(2)},
-			}},
-			setup: func(clientMock *mocks.MockIClient) {
-				gomock.InOrder(
-					clientMock.EXPECT().SendMetric(gomock.Any()).Return(nil),
-					clientMock.EXPECT().SendMetric(gomock.Any()).Return(errors.New("send failed")),
-				)
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			clientMock := mocks.NewMockIClient(ctrl)
-			if tt.setup != nil {
-				tt.setup(clientMock)
-			}
-			d := &domain{
-				client: clientMock,
-			}
-
-			err := d.sendListMetrics(tt.args.metrics)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("sendListMetrics() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

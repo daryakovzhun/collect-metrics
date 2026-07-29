@@ -10,6 +10,7 @@ import (
 type IRepository interface {
 	SetGaugeMetric(ctx context.Context, metric models.Metrics) error
 	SetCounterMetric(ctx context.Context, metric models.Metrics) error
+	UpdateMetrics(ctx context.Context, metrics []models.Metrics) error
 	GetAllMetrics(ctx context.Context) ([]models.Metrics, error)
 	GetMetricByID(ctx context.Context, metric models.Metrics) (models.Metrics, error)
 	Ping(ctx context.Context) error

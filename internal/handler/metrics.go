@@ -67,6 +67,35 @@ func (h *Handler) UpdateMetricFromBody(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *Handler) UpdateMetrics(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+
+	ctype := r.Header.Get("Content-Type")
+	if !strings.HasPrefix(ctype, "application/json") {
+		http.Error(w, "unsupported content type", http.StatusBadRequest)
+		return
+	}
+
+	var metrics []models.Metrics
+	if err := json.NewDecoder(r.Body).Decode(&metrics); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err := h.domain.UpdateMetrics(r.Context(), metrics)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(w).Encode(metrics); err != nil {
+		handleError(w, err)
+	}
+}
+
 func (h *Handler) GetMetric(w http.ResponseWriter, r *http.Request) {
 	metric, err := getMetricFromReq(r, false)
 	if err != nil {

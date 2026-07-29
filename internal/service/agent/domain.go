@@ -6,7 +6,6 @@ import (
 	"github.com/daryakovzhun/collect-metrics/internal/agent"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
-	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/daryakovzhun/collect-metrics/internal/service/controller"
 	"go.uber.org/zap"
 	"time"
@@ -57,20 +56,13 @@ func (d *domain) sendMetrics(ctx context.Context) error {
 		return fmt.Errorf("get metrics: %w", err)
 	}
 
-	err = d.sendListMetrics(metrics)
-	if err != nil {
-		return fmt.Errorf("error gauge: %w", err)
+	if len(metrics) == 0 {
+		return nil
 	}
 
-	return nil
-}
-
-func (d *domain) sendListMetrics(metrics []models.Metrics) error {
-	for _, v := range metrics {
-		err := d.client.SendMetric(&v)
-		if err != nil {
-			return fmt.Errorf("failed to send metric: %s: %w", v.ID, err)
-		}
+	err = d.client.SendMetrics(ctx, metrics)
+	if err != nil {
+		return fmt.Errorf("failed to send metrics: %w", err)
 	}
 
 	return nil

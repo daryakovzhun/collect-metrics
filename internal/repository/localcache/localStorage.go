@@ -112,3 +112,22 @@ func (s *storage) GetMetricByID(ctx context.Context, metric models.Metrics) (mod
 
 	return val, nil
 }
+
+func (s *storage) UpdateMetrics(ctx context.Context, metric []models.Metrics) (err error) {
+	for _, m := range metric {
+		switch m.MType {
+		case models.Counter:
+			err = s.SetCounterMetric(ctx, m)
+		case models.Gauge:
+			err = s.SetGaugeMetric(ctx, m)
+		default:
+			return models.ErrUnknownMetricType
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
