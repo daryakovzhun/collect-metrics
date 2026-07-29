@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/daryakovzhun/collect-metrics/internal/client"
 	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
+	"github.com/daryakovzhun/collect-metrics/internal/utils"
 	"go.uber.org/zap"
 	"net"
 	"net/http"
@@ -23,11 +25,13 @@ var (
 
 	delays       = []time.Duration{1, 3, 5}
 	countRetries = 3
+	hashHeader   = "HashSHA256"
 )
 
 type Config struct {
 	Timeout time.Duration
 	URL     string
+	Key     string
 }
 
 type httpClient struct {
@@ -119,6 +123,14 @@ func (h *httpClient) sendRequest(ctx context.Context, endpoint string, body inte
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Accept-Encoding", "gzip")
+
+	if len(h.cfg.Key) != 0 {
+		hash, err := utils.ComputeHash(h.cfg.Key, bodyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get hash, err: %w", err)
+		}
+		req.Header.Set(hashHeader, hex.EncodeToString(hash))
+	}
 
 	resp, err := h.client.Do(req)
 	if err != nil {

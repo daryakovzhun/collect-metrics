@@ -10,15 +10,21 @@ import (
 //go:embed templates/*
 var templatesFS embed.FS
 
+type Config struct {
+	Key string
+}
+
 type Handler struct {
+	cfg         *Config
 	domain      controller.IServerController
 	metricsTmpl *template.Template
 }
 
-func New(domain controller.IServerController) *Handler {
+func New(cfg *Config, domain controller.IServerController) *Handler {
 	tmplFS, _ := fs.Sub(templatesFS, "templates")
 
 	return &Handler{
+		cfg:    cfg,
 		domain: domain,
 		metricsTmpl: template.Must(
 			template.
