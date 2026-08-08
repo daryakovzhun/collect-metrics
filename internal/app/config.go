@@ -10,6 +10,8 @@ type AgentConfig struct {
 	ServerAddress  string `env:"ADDRESS"`
 	ReportInterval int    `env:"REPORT_INTERVAL"`
 	PollInterval   int    `env:"POLL_INTERVAL"`
+	Key            string `env:"KEY"`
+	RateLimit      int    `env:"RATE_LIMIT"`
 }
 
 type ServerConfig struct {
@@ -18,29 +20,40 @@ type ServerConfig struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	Restore         *bool  `env:"RESTORE"`
 	DB              string `env:"DATABASE_DSN"`
+	Key             string `env:"KEY"`
 }
 
 func getAgentConfig() (*AgentConfig, error) {
 	var cfg AgentConfig
 
-	err := env.Parse(&cfg)
-	if err != nil {
+	addr := flag.String("a", "localhost:8080", "address and port to run server")
+	reportInterval := flag.Int("r", 10, "frequency of sending metrics to the server")
+	pollInterval := flag.Int("p", 2, "the frequency of polling metrics from the package")
+	key := flag.String("k", "", "the key to use for encryption")
+	rateLimit := flag.Int("l", 1, "the rate limiter requests to server")
+
+	flag.Parse()
+
+	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
 
 	if cfg.ServerAddress == "" {
-		flag.StringVar(&cfg.ServerAddress, "a", "localhost:8080", "address and port to run server")
+		cfg.ServerAddress = *addr
 	}
-
 	if cfg.ReportInterval == 0 {
-		flag.IntVar(&cfg.ReportInterval, "r", 10, "frequency of sending metrics to the server")
+		cfg.ReportInterval = *reportInterval
 	}
-
 	if cfg.PollInterval == 0 {
-		flag.IntVar(&cfg.PollInterval, "p", 2, "the frequency of polling metrics from the package")
+		cfg.PollInterval = *pollInterval
+	}
+	if cfg.Key == "" {
+		cfg.Key = *key
 	}
 
-	flag.Parse()
+	if cfg.RateLimit == 0 {
+		cfg.RateLimit = *rateLimit
+	}
 
 	return &cfg, nil
 }
@@ -48,34 +61,37 @@ func getAgentConfig() (*AgentConfig, error) {
 func getServerConfig() (*ServerConfig, error) {
 	var cfg ServerConfig
 
-	err := env.Parse(&cfg)
-	if err != nil {
+	addr := flag.String("a", "localhost:8080", "address and port to run server")
+	storeInterval := flag.Int("i", 300, "store interval")
+	filePath := flag.String("f", "metrics.txt", "path to store files")
+	restore := flag.Bool("r", false, "restore metrics")
+	db := flag.String("d", "", "database connection string")
+	key := flag.String("k", "", "the key to use for encryption")
+
+	flag.Parse()
+
+	if err := env.Parse(&cfg); err != nil {
 		return nil, err
 	}
 
 	if cfg.Address == "" {
-		flag.StringVar(&cfg.Address, "a", "localhost:8080", "address and port to run server")
+		cfg.Address = *addr
 	}
-
 	if cfg.StoreInterval == nil {
-		cfg.StoreInterval = utils.ToPointer(0)
-		flag.IntVar(cfg.StoreInterval, "i", 300, "store interval")
+		cfg.StoreInterval = utils.ToPointer(*storeInterval)
 	}
-
 	if cfg.FileStoragePath == "" {
-		flag.StringVar(&cfg.FileStoragePath, "f", "metrics.txt", "path to store files")
+		cfg.FileStoragePath = *filePath
 	}
-
 	if cfg.Restore == nil {
-		cfg.Restore = utils.ToPointer(false)
+		cfg.Restore = utils.ToPointer(*restore)
 	}
-	flag.BoolVar(cfg.Restore, "r", *cfg.Restore, "restore metrics")
-
 	if cfg.DB == "" {
-		flag.StringVar(&cfg.DB, "d", "", "database connection string")
+		cfg.DB = *db
 	}
-
-	flag.Parse()
+	if cfg.Key == "" {
+		cfg.Key = *key
+	}
 
 	return &cfg, nil
 }

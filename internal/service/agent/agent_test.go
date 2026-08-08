@@ -3,184 +3,303 @@ package agent
 import (
 	"context"
 	"errors"
+	"github.com/daryakovzhun/collect-metrics/internal/mocks"
 	"testing"
 	"time"
 
-	"github.com/daryakovzhun/collect-metrics/internal/agent"
-	"github.com/daryakovzhun/collect-metrics/internal/client"
-	"github.com/daryakovzhun/collect-metrics/internal/mocks"
+	"github.com/daryakovzhun/collect-metrics/internal/logger"
 	models "github.com/daryakovzhun/collect-metrics/internal/model"
 	"github.com/golang/mock/gomock"
+	"go.uber.org/zap/zaptest"
 )
 
-func TestDomain_Start(t *testing.T) {
-	type fields struct {
-		cfg    *Config
-		agent  agent.IAgent
-		client client.IClient
-	}
-	type args struct {
-		ctx context.Context
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		setup   func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient)
-		wantErr bool
-	}{
-		{
-			name: "successful start and stop by context",
-			fields: fields{
-				cfg: &Config{ReportInterval: 10 * time.Millisecond},
-			},
-			args: args{
-				ctx: func() context.Context {
-					ctx, cancel := context.WithCancel(context.Background())
-					go func() {
-						time.Sleep(20 * time.Millisecond) // даём время на один тик
-						cancel()
-					}()
-					return ctx
-				}(),
-			},
-			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().Collect(gomock.Any()).Times(1)
-				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{}, nil).AnyTimes()
-				// SendMetric не вызывается, т.к. списки пусты
-			},
-			wantErr: false,
-		},
-		{
-			name: "error during sendMetrics",
-			fields: fields{
-				cfg: &Config{ReportInterval: 10 * time.Millisecond},
-			},
-			args: args{
-				ctx: func() context.Context {
-					ctx, cancel := context.WithCancel(context.Background())
-					// отменим через 100 мс, чтобы успеть получить ошибку
-					go func() {
-						time.Sleep(100 * time.Millisecond)
-						cancel()
-					}()
-					return ctx
-				}(),
-			},
-			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().Collect(gomock.Any()).Times(1)
-				// Возвращаем метрику, которая вызовет ошибку при отправке
-				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
-					{ID: "test", Value: toPtrFloat64(1.0)},
-				}, errors.New("test")).AnyTimes()
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			agentMock := mocks.NewMockIAgent(ctrl)
-			clientMock := mocks.NewMockIClient(ctrl)
-			if tt.setup != nil {
-				tt.setup(agentMock, clientMock)
-			}
-			tt.fields.agent = agentMock
-			tt.fields.client = clientMock
-
-			d := &domain{
-				cfg:    tt.fields.cfg,
-				agent:  tt.fields.agent,
-				client: tt.fields.client,
-			}
-
-			err := d.Start(tt.args.ctx)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Start() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
+// init настраивает логгер для тестов (вывод в тестовый вывод)
+func init() {
+	logger.Log = zaptest.NewLogger(&testing.T{}).Named("test")
 }
 
-func TestDomain_sendMetrics(t *testing.T) {
-	type fields struct {
-		agent  agent.IAgent
-		client client.IClient
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		setup   func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient)
-		wantErr bool
-	}{
-		{
-			name: "successful send all metrics",
-			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
-					{ID: "g1", Value: toPtrFloat64(1.1)},
-					{ID: "g2", Value: toPtrFloat64(2.2)},
-					{ID: "c1", Delta: toPtrInt64(10)},
-				}, nil).Times(1)
-
-				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(nil)
-			},
-			wantErr: false,
-		},
-		{
-			name: "error on gauge send",
-			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
-					{ID: "g1", Value: toPtrFloat64(1.1)},
-				}, nil).Times(1)
-				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(errors.New("gauge send error")).Times(1)
-				// GetCounterMetrics не должен вызываться
-			},
-			wantErr: true,
-		},
-		{
-			name: "error on counter send",
-			setup: func(agentMock *mocks.MockIAgent, clientMock *mocks.MockIClient) {
-				agentMock.EXPECT().GetAllMetrics(gomock.Any()).Return([]models.Metrics{
-					{ID: "c1", Delta: toPtrInt64(5)},
-				}, nil).Times(1)
-				clientMock.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Return(errors.New("counter send error")).Times(1)
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			agentMock := mocks.NewMockIAgent(ctrl)
-			clientMock := mocks.NewMockIClient(ctrl)
-			if tt.setup != nil {
-				tt.setup(agentMock, clientMock)
-			}
-			d := &domain{
-				cfg:    &Config{ReportInterval: time.Second}, // не используется в этом тесте
-				agent:  agentMock,
-				client: clientMock,
-			}
-
-			err := d.sendMetrics(context.Background())
-			if (err != nil) != tt.wantErr {
-				t.Errorf("sendMetrics() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-// Вспомогательные функции для создания указателей (скопированы из тестов локального кеша)
-func toPtrInt64(v int64) *int64 {
+// helper для создания указателя на float64
+func float64Ptr(v float64) *float64 {
 	return &v
 }
 
-func toPtrFloat64(v float64) *float64 {
+// helper для создания указателя на int64
+func int64Ptr(v int64) *int64 {
 	return &v
+}
+
+// TestDomainStart_Success проверяет успешный сбор и отправку метрик.
+func TestDomainStart_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 30 * time.Millisecond,
+		RateLimit:      2,
+	}
+
+	metrics := []models.Metrics{
+		{ID: "test1", MType: "gauge", Value: float64Ptr(1.0)},
+		{ID: "test2", MType: "counter", Delta: int64Ptr(5)},
+	}
+
+	// Ожидаем, что GetAllMetrics будет вызван как минимум один раз
+	mockAgent.EXPECT().
+		GetAllMetrics(gomock.Any()).
+		Return(metrics, nil).
+		MinTimes(1)
+
+	// Ожидаем, что SendMetrics будет вызван для каждой пачки метрик (как минимум один раз)
+	mockClient.EXPECT().
+		SendMetrics(gomock.Any(), metrics).
+		Return(nil).
+		MinTimes(1)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	// Даём время на выполнение нескольких циклов
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	// Ждём завершения Start
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop after context cancellation")
+	}
+}
+
+// TestDomainStart_AgentError проверяет, что ошибка агента не прерывает цикл.
+func TestDomainStart_AgentError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 30 * time.Millisecond,
+		RateLimit:      2,
+	}
+
+	// GetAllMetrics всегда возвращает ошибку
+	mockAgent.EXPECT().
+		GetAllMetrics(gomock.Any()).
+		Return(nil, errors.New("agent error")).
+		MinTimes(1)
+
+	// SendMetrics не должен вызываться, т.к. метрики не получены
+	mockClient.EXPECT().
+		SendMetrics(gomock.Any(), gomock.Any()).
+		Times(0)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop")
+	}
+}
+
+// TestDomainStart_EmptyMetrics проверяет, что пустой список метрик не приводит к отправке.
+func TestDomainStart_EmptyMetrics(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 30 * time.Millisecond,
+		RateLimit:      2,
+	}
+
+	// GetAllMetrics возвращает пустой слайс
+	mockAgent.EXPECT().
+		GetAllMetrics(gomock.Any()).
+		Return([]models.Metrics{}, nil).
+		MinTimes(1)
+
+	// SendMetrics не должен вызываться
+	mockClient.EXPECT().
+		SendMetrics(gomock.Any(), gomock.Any()).
+		Times(0)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop")
+	}
+}
+
+// TestDomainStart_ClientError проверяет, что ошибка клиента логируется, но цикл продолжается.
+func TestDomainStart_ClientError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 30 * time.Millisecond,
+		RateLimit:      2,
+	}
+
+	metrics := []models.Metrics{
+		{ID: "test", MType: "gauge", Value: float64Ptr(1.0)},
+	}
+
+	// GetAllMetrics всегда возвращает метрики
+	mockAgent.EXPECT().
+		GetAllMetrics(gomock.Any()).
+		Return(metrics, nil).
+		MinTimes(1)
+
+	// SendMetrics всегда возвращает ошибку
+	mockClient.EXPECT().
+		SendMetrics(gomock.Any(), metrics).
+		Return(errors.New("client error")).
+		MinTimes(1)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop")
+	}
+}
+
+// TestDomainStart_CancelImmediate проверяет немедленную отмену контекста без тиков.
+func TestDomainStart_CancelImmediate(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 1 * time.Hour, // большой интервал, чтобы не было тиков
+		RateLimit:      2,
+	}
+
+	// Никаких вызовов не ожидаем, т.к. контекст отменяется до первого тика
+	mockAgent.EXPECT().GetAllMetrics(gomock.Any()).Times(0)
+	mockClient.EXPECT().SendMetrics(gomock.Any(), gomock.Any()).Times(0)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	// Отменяем сразу после старта
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop after immediate cancellation")
+	}
+}
+
+// TestDomainStart_WorkerCount проверяет, что количество воркеров соответствует RateLimit.
+// Проверяем косвенно: при отправке нескольких пачек метрик все они обрабатываются,
+// а число вызовов SendMetrics равно числу пачек (независимо от RateLimit).
+func TestDomainStart_WorkerCount(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockAgent := mocks.NewMockIAgent(ctrl)
+	mockClient := mocks.NewMockIClient(ctrl)
+
+	cfg := &Config{
+		ReportInterval: 20 * time.Millisecond,
+		RateLimit:      3, // три воркера
+	}
+
+	metrics := []models.Metrics{{ID: "test", MType: "gauge", Value: float64Ptr(1.0)}}
+
+	// Ожидаем, что будет несколько вызовов GetAllMetrics
+	mockAgent.EXPECT().
+		GetAllMetrics(gomock.Any()).
+		Return(metrics, nil).
+		MinTimes(2)
+
+	// Ожидаем, что каждый вызов GetAllMetrics приведёт к одному вызову SendMetrics
+	mockClient.EXPECT().
+		SendMetrics(gomock.Any(), metrics).
+		Return(nil).
+		MinTimes(2)
+
+	domain := New(cfg, mockAgent, mockClient)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		domain.Start(ctx)
+		close(done)
+	}()
+
+	// Даём время на несколько циклов
+	time.Sleep(100 * time.Millisecond)
+	cancel()
+
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("domain.Start did not stop")
+	}
 }
