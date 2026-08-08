@@ -96,11 +96,11 @@ func (a *rtAgent) collectSystemMetrics(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to get cpu data: %w", err)
 	}
-
-	var cpuUtil float64
-	if len(cpuPercents) > 0 {
-		cpuUtil = cpuPercents[0]
+	var total float64
+	for _, p := range cpuPercents {
+		total += p
 	}
+	cpuUtil := total / float64(len(cpuPercents))
 
 	a.SetGaugeMetric(ctx, toGaugeMetric(TotalMemory, float64(vMem.Total)))
 	a.SetGaugeMetric(ctx, toGaugeMetric(FreeMemory, float64(vMem.Free)))

@@ -64,8 +64,13 @@ func WithGzipMiddleware(next http.Handler) http.Handler {
 
 func (h *Handler) WithHashMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if h.cfg.Key == "" || r.Header.Get(hashHeader) == "" {
+		if h.cfg.Key == "" {
 			next.ServeHTTP(w, r)
+			return
+		}
+
+		if r.Header.Get(hashHeader) == "" {
+			http.Error(w, "header HashSHA256 not set", http.StatusBadRequest)
 			return
 		}
 
@@ -94,6 +99,47 @@ func (h *Handler) WithHashMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		wrapper := &responseWrapper{
+			ResponseWriter: w,
+			status:         http.StatusOK,
+		}
+
+		next.ServeHTTP(wrapper, r)
+
+		respBody := wrapper.buf.Bytes()
+		hashResp, err := utils.ComputeHash(h.cfg.Key, respBody)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set(hashHeader, hex.EncodeToString(hashResp))
+
+		if !wrapper.headerWritten {
+			w.WriteHeader(wrapper.status)
+		}
+		if len(respBody) > 0 {
+			_, _ = w.Write(respBody)
+		}
 	})
+}
+
+type responseWrapper struct {
+	http.ResponseWriter
+	buf           bytes.Buffer
+	status        int
+	headerWritten bool
+}
+
+func (rw *responseWrapper) Header() http.Header {
+	return rw.ResponseWriter.Header()
+}
+
+func (rw *responseWrapper) Write(b []byte) (int, error) {
+	return rw.buf.Write(b)
+}
+
+func (rw *responseWrapper) WriteHeader(statusCode int) {
+	rw.status = statusCode
+	rw.headerWritten = true
 }
